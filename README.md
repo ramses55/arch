@@ -8,3 +8,13 @@
 ## Установка необходимых пакетов
 ```bash
 pip install -r requirements.txt
+```
+
+## Базовое использование
+```bash
+python3 main.py
+```
+
+main.py возьмет картинки из ./data/raw и запишет результат в ./output
+
+
