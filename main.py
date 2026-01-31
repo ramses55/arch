@@ -1,5 +1,7 @@
-from utils import find_packet,  find_ruler_sift, find_region, fragments_contours
-#import glob
+from utils import find_packet,  find_ruler_sift, \
+                    find_region, fragments_contours, \
+                    save_template, load_template
+
 from pathlib import Path
 import cv2
 import os
@@ -8,9 +10,14 @@ import numpy as np
 
 directory = Path("./data/raw/")
 jpg_files = list(directory.glob("*.jpg")) + list(directory.glob("*.jpeg"))
-template = cv2.imread('./ruler_template-v.png', cv2.IMREAD_GRAYSCALE)
-if  template is None:
-    raise IOError('failed to read ./ruler_template_v.png')
+
+#template = cv2.imread("./ruler_template-v.png")
+#save_template(template)
+
+template_filename = "./template.npz"
+kp_t, des_t, h, w = load_template(template_filename)
+
+
 files = jpg_files[:]
 
 
@@ -20,13 +27,13 @@ for i in files:
     img1, packet = find_packet(img)
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    cnt1 = find_ruler_sift(img_gray, template)
+    cnt1 = find_ruler_sift(img_gray, kp_t, des_t, h, w)
 
     cv2.drawContours(img, [cnt1], 0, (255,255,255), -1)
     cv2.drawContours(img_gray, [cnt1], 0, (255,255,255), -1)
 
 
-    cnt2 = find_ruler_sift(img_gray, template)
+    cnt2 = find_ruler_sift(img_gray, kp_t, des_t, h, w)
     cv2.drawContours(img, [cnt2], 0, (255,255,255), -1)
 
 
