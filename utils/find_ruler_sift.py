@@ -1,6 +1,41 @@
 import numpy as np
 import cv2
 
+
+def filter_features(mask, kp, des):
+    '''
+        This function filters keypoints and descriptors:
+        new keypoints and new descriptors will have no points
+        inside provided mask
+
+
+    Args:
+       mask (np.ndarray) : mask
+       kp (list(cv2.KeyPoint)): keypoints
+       des (np.ndarray): descriptors
+    
+    
+    
+    Returns:
+       kp_f (list(cv2.KeyPoint)) : filtered keypoints
+       des_f (np.ndarray): filtered descriptors
+
+    '''
+
+
+    pts = np.array([a.pt for a in kp]).astype(int)
+    keep = mask[pts[:,1], pts[:,0]] == 0
+    
+    
+    kp_f = [k for k,m in zip(kp,keep) if m]
+    des_f = des[keep]
+
+    return kp_f, des_f
+
+
+
+
+
 def save_template(template: np.ndarray)-> bool:
     sift = cv2.SIFT_create()
     kp, des = sift.detectAndCompute(template, None)
@@ -37,7 +72,8 @@ def load_template(filename: str)->tuple:
 
 
 
-def find_ruler_sift(image: np.ndarray,
+def find_ruler_sift(kp: list,
+                    des: np.ndarray,
                     kp_t: list,
                     des_t: np.ndarray,
                     h: int,
@@ -52,7 +88,8 @@ def find_ruler_sift(image: np.ndarray,
 
 
     Args:
-       image (np.ndarray) : Input image 
+       kp (list(cv2.KeyPoint)): precomputed keypoints of image
+       des (np.ndarray): precomputed descriptors of image
        kp_t (list(cv2.KeyPoint)): precomputed keypoints of template
        des_t (np.ndarray): precomputed descriptors of template
        h (int): height of the template image
@@ -62,24 +99,26 @@ def find_ruler_sift(image: np.ndarray,
     
     
     Returns:
-       dst (np.ndarray) : Contour of ruler (rectangle)
+       dst (np.ndarray) : Contour of ruler (close to rectangle)
     '''
 
 
 
-    MIN_MATCH_COUNT = 100
 
-    feat = cv2.SIFT_create()
-    
-    
-    if template != None:
-        kp_t, des_t = feat.detectAndCompute(template,None)
+    #feat = cv2.SIFT_create()
+    #
+    #
+    #if template != None:
+    #    kp_t, des_t = feat.detectAndCompute(template,None)
+
+
 
 
 
     # find the keypoints and descriptors of image with SIFT
-    kp, des = feat.detectAndCompute(image,None)
+    #kp, des = feat.detectAndCompute(image,None)
 
+    MIN_MATCH_COUNT = 100
 
     FLANN_INDEX_KDTREE = 1
     index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)

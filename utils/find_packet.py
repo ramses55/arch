@@ -3,7 +3,7 @@ import numpy as np
 
 
 
-def _crop_rect(image: np.ndarray,
+def crop_rect(image: np.ndarray,
               rect: tuple[tuple[float,float],tuple[float,float], float]
               ) -> np.ndarray:
 
@@ -87,8 +87,9 @@ def find_packet(image: np.ndarray,
         Returns:
             tuple[np.ndarray, np.ndarray]:
                 A tuple containing:
-                - crop (np.ndarray): packet (crop from image)
-                - box (np.ndarray): rectanlge contour of packet
+                - mask (np.ndarray): mask of the packet
+                - rect (tuple): rectanlge contour of packet, output of
+                  minAreaRect
 
 
     '''
@@ -123,7 +124,6 @@ def find_packet(image: np.ndarray,
 
 
 
-    mask = np.zeros_like(im)
     
     
     
@@ -133,9 +133,7 @@ def find_packet(image: np.ndarray,
                                    )
     
     
-    
-    im2 = np.copy(im)
-    
+    mask = np.zeros(im.shape[0:2], dtype=np.uint8)
     
     
     #find contour with largest area
@@ -145,22 +143,12 @@ def find_packet(image: np.ndarray,
     areas = np.array(areas)
     m = areas.argmax()
 
-    cv2.drawContours(im2, contours, m, (0,0,255), 3)
-    cv2.drawContours(mask, contours, m, (0,255,0), -1)
-    masked = cv2.addWeighted(im2, 1, mask, 0.2, 0)
+    cv2.drawContours(mask, contours, m, 255, -1)
     
     
     rect = cv2.minAreaRect(contours[areas.argmax()])
-    box = cv2.boxPoints(rect)
-    box = np.intp(box) 
-    cv2.drawContours(masked,[box],0,(255,0,0),3)
     
-    crop = cv2.cvtColor(_crop_rect(im,rect), cv2.COLOR_RGB2BGR)
-
-    masked =  cv2.cvtColor(masked,cv2.COLOR_RGB2BGR)
-    
-    #return crop, masked
-    return crop, box
+    return mask, rect
 
 
 
