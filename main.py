@@ -1,8 +1,8 @@
 from utils import find_packet,  find_ruler_sift, \
                     find_region, fragments_contours, \
                     save_template, load_template, \
-                    filter_features, crop_rect, \
-                    find_label
+                    filter_features, find_label, \
+                    crop_rect
 
 from pathlib import Path
 import cv2
@@ -28,27 +28,11 @@ for i in files:
     img = cv2.imread(i)
     img_copy = img.copy()
 
-    #print(i)
-
-    #find packet
     mask_packet, packet_rect = find_packet(img)
-
-
-    h = max(img.shape)
-
     packet = np.intp(cv2.boxPoints(packet_rect))
 
-
     packet_crop = crop_rect(img, packet_rect)
-
-    #label_crop = find_label(packet_crop)
-
-    #print(f'\tshape: {label_crop.shape[0:2]}')
-
-
-    #cv2.imwrite(os.path.join('./output1/',Path(i).stem + '.png'), label_crop)
-    #cv2.imwrite(os.path.join('./output/',Path(i).stem + '.png'), packet_crop)
-
+    label = find_label(packet_crop)
 
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -123,5 +107,6 @@ for i in files:
 
 
     cv2.imwrite(os.path.join('./output/',os.path.basename(i)), img_copy)
+    cv2.imwrite(os.path.join('./output1/',os.path.basename(i)), label)
 
 
