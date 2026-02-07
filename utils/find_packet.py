@@ -151,4 +151,103 @@ def find_packet(image: np.ndarray,
     return mask, rect
 
 
+def find_label(image: np.ndarray,
+                LOWER_BOUND: tuple[int,int,int] = (0,0,80),
+                UPPER_BOUND: tuple[int,int,int] = (179, 40, 255)
+                ) -> np.ndarray:
+    '''
+        
+        This function finds whitish label in packet image. 
+        Firstly it make white border around the image so there will be outer
+        contour
+        Secondly, it finds mask
+        of whitish objects in image by color (hsv, inRange). Thirdly, it
+        finds countour with index 2 and fits orientated rectangle to it
+        using minAreaRect.
+
+
+        Args:
+            image (np.ndarray) : input image in BGR format
+            LOWER_BOUND (tuple[int,int,int]) : lower bound for color
+            UPPER_BOUND (tuple[int,int,int]) : upper bound for color
+
+
+        Returns:
+            label_crop (np.ndarray): cropped label
+
+
+    '''
+
+    #white border enforces existence of outer contour
+    image = cv2.copyMakeBorder(image,
+                            top=10,
+                            bottom=10,
+                            left=10,
+                            right=10,
+                            borderType=cv2.BORDER_CONSTANT,
+                            value=(255,255,255)
+                           )
+
+    im_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    label_mask = cv2.inRange(cv2.blur(im_hsv, (21,21)),
+                              LOWER_BOUND,
+                              UPPER_BOUND)
+
+
+
+    #this inforces no contour at the border of image
+    label_mask = cv2.bitwise_not(label_mask)
+
+
+    cnts, hierarchy = cv2.findContours(label_mask,
+                                       mode=cv2.RETR_CCOMP,
+                                       method = cv2.CHAIN_APPROX_SIMPLE
+                                       )
+    
+    #value to filter very small areas
+    h = min(image.shape[0:2])/20
+    
+    new_cnts = list()
+    new_hierarchy = list()
+    areas = list()
+    
+    #drop contours
+    for i,cnt in enumerate(cnts):
+        cnt = cv2.convexHull(cnt)
+        area = cv2.contourArea(cnt)
+        rect = cv2.minAreaRect(cnt)
+        rect_w, rect_h = rect[1]
+        min_rect_area = rect_w*rect_h
+
+        #drop conts with small area or no parents in cv2.RETR_CCOMP hierarchy
+        if area > h*h and hierarchy[0][i][3]!=-1:
+
+            #drop cnts different from rectangle in terms of area
+            if area / min_rect_area > 0.8:
+                new_cnts.append(cnt)
+                new_hierarchy.append(hierarchy[0][i])
+                areas.append(area)
+
+    new_hierarchy = np.array(new_hierarchy).reshape(1,-1,4)
+    areas = np.array(areas)
+
+    #gets contour with the largest area
+    m = np.argmax(areas)
+    
+
+    label_rect = cv2.minAreaRect(new_cnts[m])
+    label_crop = crop_rect(image, label_rect)
+
+    if label_crop.shape[1] < 100:
+        mask = np.full_like(image,255)
+        label_box = np.intp(cv2.boxPoints(label_rect))
+        cv2.drawContours(mask, [label_box], 0, (0,0,0),-1)
+        label_crop = cv2.addWeighted(image, 1, mask,1,0)
+
+    return label_crop
+
+
+
+
+
 
