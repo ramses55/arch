@@ -21,7 +21,7 @@ template_filename = "./template.npz"
 kp_t, des_t, h, w = load_template(template_filename)
 
 
-files = jpg_files[:]
+files = jpg_files[-5:]
 
 
 for i in files:
@@ -106,7 +106,7 @@ for i in files:
 
 
 
-    cv2.imwrite(os.path.join('./output/',os.path.basename(i)), img_copy)
-    cv2.imwrite(os.path.join('./output1/',os.path.basename(i)), label)
+    cv2.imwrite(os.path.join('./output/',Path(i).stem + '.png'), img_copy)
+    cv2.imwrite(os.path.join('./output1/',Path(i).stem + '.png'), label)
 
 

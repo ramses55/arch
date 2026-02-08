@@ -240,6 +240,19 @@ def find_label(image: np.ndarray,
 
     if label_crop.shape[1] < 100:
         mask = np.full_like(image,255)
+
+        print(label_rect)
+
+        l = list(label_rect)
+        l1 = list(l[1])
+        l1[0] *=2
+        l1[1] *=2
+        l[1] = l1
+        label_rect = list(l)
+
+
+        print(label_rect)
+
         label_box = np.intp(cv2.boxPoints(label_rect))
         cv2.drawContours(mask, [label_box], 0, (0,0,0),-1)
         label_crop = cv2.addWeighted(image, 1, mask,1,0)
