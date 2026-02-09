@@ -178,15 +178,6 @@ def find_label(image: np.ndarray,
 
     '''
 
-    #white border enforces existence of outer contour
-    image = cv2.copyMakeBorder(image,
-                            top=10,
-                            bottom=10,
-                            left=10,
-                            right=10,
-                            borderType=cv2.BORDER_CONSTANT,
-                            value=(255,255,255)
-                           )
 
     im_hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     label_mask = cv2.inRange(cv2.blur(im_hsv, (21,21)),
@@ -205,7 +196,7 @@ def find_label(image: np.ndarray,
                                        )
     
     #value to filter very small areas
-    h = min(image.shape[0:2])/20
+    h = min(image.shape[0:2])/50
     
     new_cnts = list()
     new_hierarchy = list()
@@ -236,28 +227,28 @@ def find_label(image: np.ndarray,
     
 
     label_rect = cv2.minAreaRect(new_cnts[m])
-    label_crop = crop_rect(image, label_rect)
+    #label_crop = crop_rect(image, label_rect)
 
-    if label_crop.shape[1] < 100:
-        mask = np.full_like(image,255)
+    #if label_crop.shape[1] < 100:
+    #    mask = np.full_like(image,255)
 
-        print(label_rect)
+    #    print(label_rect)
 
-        l = list(label_rect)
-        l1 = list(l[1])
-        l1[0] *=2
-        l1[1] *=2
-        l[1] = l1
-        label_rect = list(l)
+    #    l = list(label_rect)
+    #    l1 = list(l[1])
+    #    l1[0] *=2
+    #    l1[1] *=2
+    #    l[1] = l1
+    #    label_rect = list(l)
 
 
-        print(label_rect)
+    #    print(label_rect)
 
-        label_box = np.intp(cv2.boxPoints(label_rect))
-        cv2.drawContours(mask, [label_box], 0, (0,0,0),-1)
-        label_crop = cv2.addWeighted(image, 1, mask,1,0)
+    #    label_box = np.intp(cv2.boxPoints(label_rect))
+    #    cv2.drawContours(mask, [label_box], 0, (0,0,0),-1)
+    #    label_crop = cv2.addWeighted(image, 1, mask,1,0)
 
-    return label_crop
+    return label_rect
 
 
 

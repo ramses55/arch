@@ -21,7 +21,7 @@ template_filename = "./template.npz"
 kp_t, des_t, h, w = load_template(template_filename)
 
 
-files = jpg_files[-5:]
+files = jpg_files[:]
 
 
 for i in files:
@@ -31,8 +31,19 @@ for i in files:
     mask_packet, packet_rect = find_packet(img)
     packet = np.intp(cv2.boxPoints(packet_rect))
 
-    packet_crop = crop_rect(img, packet_rect)
-    label = find_label(packet_crop)
+    img_copy_label = img.copy()
+    packet_box = np.intp(cv2.boxPoints(packet_rect))
+    mask = np.zeros(img.shape[0:2], dtype=np.uint8)
+    cv2.drawContours(mask,
+                     [packet_box],
+                     0,
+                     255,
+                     -1)
+    img_copy_label[mask==0] = np.array([255,255,255])
+    label_rect = find_label(img_copy_label)
+    label_box = np.intp(cv2.boxPoints(label_rect))
+
+
 
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -85,6 +96,7 @@ for i in files:
     cv2.drawContours(img_copy, [packet], 0, (0,255,0), 5)
     cv2.drawContours(img_copy, [cnt1], 0, (0,0,255), 5)
     cv2.drawContours(img_copy, [cnt2], 0, (255,0,0), 5)
+    cv2.drawContours(img_copy, [label_box], 0, (0,0,255), 5)
 
     for c in cnt:
         rect = cv2.minAreaRect(c)
@@ -107,6 +119,5 @@ for i in files:
 
 
     cv2.imwrite(os.path.join('./output/',Path(i).stem + '.png'), img_copy)
-    cv2.imwrite(os.path.join('./output1/',Path(i).stem + '.png'), label)
 
 
