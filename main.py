@@ -2,12 +2,15 @@ from utils import find_packet,  find_ruler_sift, \
                     find_region, fragments_contours, \
                     save_template, load_template, \
                     filter_features, find_label, \
-                    crop_rect
+                    crop_rect, ocr, index1, \
+                    index2, date
 
 from pathlib import Path
 import cv2
 import os
 import numpy as np
+
+
 
 
 directory = Path("./data/raw/")
@@ -20,8 +23,10 @@ jpg_files = list(directory.glob("*.jpg")) + list(directory.glob("*.jpeg"))
 template_filename = "./template.npz"
 kp_t, des_t, h, w = load_template(template_filename)
 
+f = open("res", 'w+')
 
-files = jpg_files[:]
+
+files = jpg_files[26:]
 
 
 for i in files:
@@ -29,7 +34,7 @@ for i in files:
     img_copy = img.copy()
 
     mask_packet, packet_rect = find_packet(img)
-    packet = np.intp(cv2.boxPoints(packet_rect))
+    packet_crop = crop_rect(img, packet_rect)
 
     img_copy_label = img.copy()
     packet_box = np.intp(cv2.boxPoints(packet_rect))
@@ -42,6 +47,7 @@ for i in files:
     img_copy_label[mask==0] = np.array([255,255,255])
     label_rect = find_label(img_copy_label)
     label_box = np.intp(cv2.boxPoints(label_rect))
+    label_crop = crop_rect(img, label_rect)
 
 
 
@@ -77,7 +83,7 @@ for i in files:
 
 
 
-    cv2.drawContours(img, [packet], 0, (255,255,255), -1)
+    cv2.drawContours(img, [packet_box], 0, (255,255,255), -1)
     
     
 
@@ -93,7 +99,21 @@ for i in files:
 
     cnt = fragments_contours(final)
 
-    cv2.drawContours(img_copy, [packet], 0, (0,255,0), 5)
+    text1  = ocr(img_copy,"./api_key", "folder_id", label_box=label_box)     
+    text2  = ocr(img_copy_label,"./api_key", "folder_id", label_box=label_box)     
+    text3  = ocr(label_crop,"./api_key", "folder_id", label_box=None)     
+
+    text = list(set(text1 + text2 + text3))
+
+
+    d = date(text)
+    ind2 = index2(text)
+    ind1 = index1(text)
+
+
+
+
+    cv2.drawContours(img_copy, [packet_box], 0, (0,255,0), 5)
     cv2.drawContours(img_copy, [cnt1], 0, (0,0,255), 5)
     cv2.drawContours(img_copy, [cnt2], 0, (255,0,0), 5)
     cv2.drawContours(img_copy, [label_box], 0, (0,0,255), 5)
@@ -118,6 +138,10 @@ for i in files:
 
 
 
-    cv2.imwrite(os.path.join('./output/',Path(i).stem + '.png'), img_copy)
+    cv2.imwrite(os.path.join('./output3/',Path(i).stem + '.png'), img_copy)
+    cv2.imwrite(os.path.join('./output2/',Path(i).stem + '.png'), packet_crop)
+    cv2.imwrite(os.path.join('./output1/',Path(i).stem + '.png'), label_crop)
 
+    print(f'{i}\t{ind1}_{ind2}\t{img.shape[0:2]}\t{text}', file=f)
 
+f.close()
