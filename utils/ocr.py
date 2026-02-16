@@ -201,11 +201,6 @@ def ocr(image: np.ndarray,
     
     
     
-    data2 = {"mimeType": "PNG",
-            "languageCodes": ["ru"],
-            "model": "handwritten", 
-            "content": content}
-    
     url = "https://ocr.api.cloud.yandex.net/ocr/v1/recognizeText"
     
     headers= {"Content-Type": "application/json",
@@ -218,31 +213,16 @@ def ocr(image: np.ndarray,
                        data=json.dumps(data1),
                        timeout=10)
     
-    time.sleep(1)
-    
-    #w2 = requests.post(url=url,
-    #                   headers=headers,
-    #                   data=json.dumps(data2),
-    #                   timeout=10)
-
-
-
-    #if w2.status_code != 200:
-    #    raise RuntimeError(f"OCR failed!: {w2.status_code}")
-    
     
     if w1.status_code != 200:
-        raise RuntimeError(f"OCR failed!: {w1.status_code}")
+        print(f"OCR failed!: {w1.status_code}")
+        return None
 
 
 
     blocks1 = w1.json()['result']['textAnnotation']['blocks']
-    #blocks2 = w2.json()['result']['textAnnotation']['blocks']
 
     text1, boxes1 = get_text(blocks1, label_box)
-    #text2, boxes2 = get_text(blocks2, label_box)
-
-    #text = list(set(text1 + text2))
     text = list(set(text1))
 
 

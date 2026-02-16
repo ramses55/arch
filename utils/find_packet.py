@@ -249,12 +249,42 @@ def find_label(image: np.ndarray,
     #    label_crop = cv2.addWeighted(image, 1, mask,1,0)
 
 
+    #label_box = cv2.boxPoints(label_rect)
+
+
+        
+
+
+    return label_rect
+
+
+
+def orient_label(label_crop: np.ndarray) -> np.ndarray:
+
+    '''
+        
+        This function finds properly orientates label using that qr code is in
+        top right corner
+
+        Args:
+            image (np.ndarray) : cropped label in BGR format
+
+
+        Returns:
+            orientated_label (np.ndarray): properly orientated label
+
+
+    '''
+    label_rect = (
+            (label_crop.shape[0]//2, label_crop.shape[1]//2),
+            label_crop.shape[0:2], 
+            0)
+
     label_box = cv2.boxPoints(label_rect)
 
 
+    #find 4 rectangles which comprise full label
     rects = list()
-
-
     for point in label_box:
         rect1 = list()
         rect1.append((point + np.array(label_rect[0]))/2)
@@ -262,13 +292,67 @@ def find_label(image: np.ndarray,
         rect1.append(label_rect[2])
 
         rects.append(rect1)
-        
 
 
-    return label_rect, rects
+    inner_boxes = list()
+    for rect in rects:
+        inner_box = cv2.boxPoints(rect)
+        inner_boxes.append(np.intp(inner_box))
 
 
 
 
+    #find small rectangle with largest area of black color
+    blacks = np.zeros(4)
+    for j,new_box in enumerate(inner_boxes):
+        x_min = new_box[:,0].min()
+        x_max = new_box[:,0].max()
+        y_min = new_box[:,1].min()
+        y_max = new_box[:,1].max()
 
+        crop = label_crop[y_min:y_max, x_min:x_max]
+        black=cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY).sum()
+        blacks[j] = black
+
+    mi = np.argmin(blacks)
+    qr  = np.intp(inner_boxes[mi])
+
+    #locate rectangle with qr in label
+    arg = np.argmin(((label_box - qr)**2).sum(axis=1))
+
+    #perform rotations
+    rota_arg = [cv2.ROTATE_90_CLOCKWISE,
+                None,
+                cv2.ROTATE_90_COUNTERCLOCKWISE,
+                cv2.ROTATE_180]
+
+   # rota_arg1 = [180,
+   #             -90,
+   #             0,
+   #             90]
+
+
+   # rota_arg2 = [cv2.ROTATE_180,
+   #             cv2.ROTATE_90_CLOCKWISE,
+   #             None,
+   #             cv2.ROTATE_90_COUNTERCLOCKWISE]
+
+
+
+    o_label = cv2.rotate(label_crop, rota_arg[arg])
+    o_label = cv2.rotate(o_label, cv2.ROTATE_90_CLOCKWISE)
+
+
+    #upscale label if it is small
+    if o_label.shape[0] < 100:
+        scale = 2
+        o_label = cv2.resize(
+            o_label,
+            None,
+            fx=scale,
+            fy=scale,
+            interpolation=cv2.INTER_LANCZOS4  # or INTER_CUBIC
+        )
+
+    return o_label
 
