@@ -9,6 +9,7 @@ from pathlib import Path
 import cv2
 import os
 import numpy as np
+from cv2 import dnn_superres
 
 
 def order_points(pts):
@@ -35,14 +36,18 @@ jpg_files = list(directory.glob("*.jpg")) + list(directory.glob("*.jpeg"))
 template_filename = "./template.npz"
 kp_t, des_t, h, w = load_template(template_filename)
 
-f = open("res", 'a')
+f = open("new-res", 'a')
 
 
-files = jpg_files[:]
+files = jpg_files[-4:]
 
+ 
+###########################
 
 for i in files:
     img = cv2.imread(i)
+    #print(i)
+    #print(img.shape)
     img_copy = img.copy()
     img_copy1 = img.copy()
 
@@ -225,6 +230,20 @@ for i in files:
     y_max = new_label_box[:,1].max()
 
     new_label_crop = res[y_min:y_max, x_min:x_max]
+    #print(new_label_crop.shape)
+    if new_label_crop.shape[0] < 100:
+        scale = 2
+        new_label_crop = cv2.resize(
+            new_label_crop,
+            None,
+            fx=scale,
+            fy=scale,
+            interpolation=cv2.INTER_LANCZOS4  # or INTER_CUBIC
+            #interpolation=cv2.INTER_CUBIC  # or INTER_CUBIC
+        )
+
+
+
     #cv2.drawContours(res, [np.intp(new_label_box)], 0, (0,255,0),5)
     #for b in new_boxes:
     #    cv2.drawContours(res, [b], 0, (0,0,0), 7)
@@ -243,15 +262,15 @@ for i in files:
 
     #text1  = ocr(img_copy,"./api_key", "folder_id", label_box=label_box)     
     #text2  = ocr(img_copy_label,"./api_key", "folder_id", label_box=label_box)     
-    #text3  = ocr(new_label_crop,"./api_key", "folder_id", label_box=None)     
+    text3  = ocr(new_label_crop,"./api_key", "folder_id", label_box=None)     
 
     #text = list(set(text1 + text2 + text3))
-    #text = text3
+    text = text3
 
 
-    #d = date(text)
-    #ind2 = index2(text)
-    #ind1 = index1(text)
+    d = date(text)
+    ind2 = index2(text)
+    ind1 = index1(text)
 
 
 
@@ -288,6 +307,6 @@ for i in files:
     cv2.imwrite(os.path.join('./output2/',Path(i).stem + '.png'), packet_crop)
     cv2.imwrite(os.path.join('./output1/',Path(i).stem + '.png'), label_crop)
 
-    #print(f'{i}\t{ind1}_{ind2}\t{img.shape[0:2]}\t{text}', file=f)
+    print(f'{i}\t{ind1}_{ind2}\t{img.shape[0:2]}\t{text}', file=f)
 
 f.close()
