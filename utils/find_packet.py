@@ -24,13 +24,13 @@ def crop_rect(image: np.ndarray,
            image (np.ndarray) : Cropped rectanlge
     '''
 
-    if not isinstance(image, np.ndarray):
-        raise TypeError("image must be np.ndarray")
+    #if not isinstance(image, np.ndarray):
+    #    raise TypeError("image must be np.ndarray")
 
 
-    if not isinstance(rect, tuple):
+    #if not isinstance(rect, tuple):
 
-        raise TypeError("rect must be output tuple")
+    #    raise TypeError("rect must be output tuple")
 
 
     center, _, angle = rect
@@ -248,7 +248,24 @@ def find_label(image: np.ndarray,
     #    cv2.drawContours(mask, [label_box], 0, (0,0,0),-1)
     #    label_crop = cv2.addWeighted(image, 1, mask,1,0)
 
-    return label_rect
+
+    label_box = cv2.boxPoints(label_rect)
+
+
+    rects = list()
+
+
+    for point in label_box:
+        rect1 = list()
+        rect1.append((point + np.array(label_rect[0]))/2)
+        rect1.append((label_rect[1][0]/2, label_rect[1][1]/2))
+        rect1.append(label_rect[2])
+
+        rects.append(rect1)
+        
+
+
+    return label_rect, rects
 
 
 

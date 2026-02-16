@@ -86,7 +86,7 @@ def index1(text: list) -> str:
 
 
     for a in text:
-        if a.isnumeric() and len(2)>2:
+        if a.isnumeric() and len(a)>2:
 
             return a
     
@@ -141,7 +141,7 @@ def date(text: list) -> str:
     '''
 
     for a in text:
-        a = a.replace(".", "").replcae(" ","")
+        a = a.replace(".", "").replace(" ","")
         if a.isnumeric() and len(a)==8:
             return a
 
@@ -220,29 +220,30 @@ def ocr(image: np.ndarray,
     
     time.sleep(1)
     
-    w2 = requests.post(url=url,
-                       headers=headers,
-                       data=json.dumps(data2),
-                       timeout=10)
+    #w2 = requests.post(url=url,
+    #                   headers=headers,
+    #                   data=json.dumps(data2),
+    #                   timeout=10)
 
 
 
-    if w2.status_code != 200:
-        raise RuntimeError(f"OCR failed!: {w2.status_code}")
+    #if w2.status_code != 200:
+    #    raise RuntimeError(f"OCR failed!: {w2.status_code}")
     
     
     if w1.status_code != 200:
-        raise RuntimeError(f"OCR failed!: {w2.status_code}")
+        raise RuntimeError(f"OCR failed!: {w1.status_code}")
 
 
 
     blocks1 = w1.json()['result']['textAnnotation']['blocks']
-    blocks2 = w2.json()['result']['textAnnotation']['blocks']
+    #blocks2 = w2.json()['result']['textAnnotation']['blocks']
 
     text1, boxes1 = get_text(blocks1, label_box)
-    text2, boxes2 = get_text(blocks2, label_box)
+    #text2, boxes2 = get_text(blocks2, label_box)
 
-    text = list(set(text1 + text2))
+    #text = list(set(text1 + text2))
+    text = list(set(text1))
 
 
     return text

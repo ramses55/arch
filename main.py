@@ -11,6 +11,18 @@ import os
 import numpy as np
 
 
+def order_points(pts):
+    rect = np.zeros((4, 2), dtype="int32")
+
+    s = pts.sum(axis=1)
+    rect[0] = pts[np.argmin(s)]  # top-left
+    rect[2] = pts[np.argmax(s)]  # bottom-right
+
+    diff = np.diff(pts, axis=1)
+    rect[1] = pts[np.argmin(diff)]  # top-right
+    rect[3] = pts[np.argmax(diff)]  # bottom-left
+
+    return rect
 
 
 directory = Path("./data/raw/")
@@ -23,15 +35,16 @@ jpg_files = list(directory.glob("*.jpg")) + list(directory.glob("*.jpeg"))
 template_filename = "./template.npz"
 kp_t, des_t, h, w = load_template(template_filename)
 
-f = open("res", 'w+')
+f = open("res", 'a')
 
 
-files = jpg_files[26:]
+files = jpg_files[:]
 
 
 for i in files:
     img = cv2.imread(i)
     img_copy = img.copy()
+    img_copy1 = img.copy()
 
     mask_packet, packet_rect = find_packet(img)
     packet_crop = crop_rect(img, packet_rect)
@@ -45,7 +58,7 @@ for i in files:
                      255,
                      -1)
     img_copy_label[mask==0] = np.array([255,255,255])
-    label_rect = find_label(img_copy_label)
+    label_rect, rects = find_label(img_copy_label)
     label_box = np.intp(cv2.boxPoints(label_rect))
     label_crop = crop_rect(img, label_rect)
 
@@ -99,16 +112,147 @@ for i in files:
 
     cnt = fragments_contours(final)
 
-    text1  = ocr(img_copy,"./api_key", "folder_id", label_box=label_box)     
-    text2  = ocr(img_copy_label,"./api_key", "folder_id", label_box=label_box)     
-    text3  = ocr(label_crop,"./api_key", "folder_id", label_box=None)     
-
-    text = list(set(text1 + text2 + text3))
 
 
-    d = date(text)
-    ind2 = index2(text)
-    ind1 = index1(text)
+####################################
+    center, _, angle = label_rect
+
+    height, width = img.shape[0:2]
+
+    M = cv2.getRotationMatrix2D(center, angle,1)
+
+
+    cos = np.abs(M[0, 0])
+    sin = np.abs(M[0, 1])
+    new_width = int((height * sin) + (width * cos))
+    new_height = int((height * cos) + (width * sin))
+
+    M[0, 2] += (new_width / 2) - center[0]
+    M[1, 2] += (new_height / 2) - center[1]
+
+
+    rotated = cv2.warpAffine(img_copy1, M, (new_width, new_height)) 
+
+
+    new_label_box = np.hstack((label_box, np.ones((4,1)))) @ M.T
+
+
+    new_boxes = list()
+    for rect in rects:
+        box0 = cv2.boxPoints(rect)
+        new_box0 =  np.hstack((box0, np.ones((4,1)))) @ M.T
+        new_boxes.append(np.intp(new_box0))
+
+
+
+
+    blacks = np.zeros(4)
+    for j,new_box in enumerate(new_boxes):
+
+        x_min = new_box[:,0].min()
+        x_max = new_box[:,0].max()
+        y_min = new_box[:,1].min()
+        y_max = new_box[:,1].max()
+
+        crop = rotated[y_min:y_max, x_min:x_max]
+        black=cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY).sum()
+        blacks[j] = black
+
+
+    ma = np.argmax(blacks)
+    mi = np.argmin(blacks)
+
+
+
+    qr  = np.intp(new_boxes[mi])
+    arg = np.argmin(((new_label_box - qr)**2).sum(axis=1))
+    ori = ["top_left", "top_right", "bottom_right", "bottom_left"]
+    #ori = ["bottom_left", "top_left", "top_right", "bottom_right"]
+    rota_arg = [cv2.ROTATE_90_CLOCKWISE,
+                None,
+                cv2.ROTATE_90_COUNTERCLOCKWISE,
+                cv2.ROTATE_180]
+
+    rota_arg1 = [180,
+                -90,
+                0,
+                90]
+
+
+
+    #res = cv2.rotate(rotated, rota_arg[arg])
+    #res = cv2.rotate(res, cv2.ROTATE_90_CLOCKWISE)
+
+
+
+    center= new_label_box.mean(axis=0)
+
+    height, width = img.shape[0:2]
+
+    M = cv2.getRotationMatrix2D(center, rota_arg1[arg],1)
+
+
+    cos = np.abs(M[0, 0])
+    sin = np.abs(M[0, 1])
+    new_width = int((height * sin) + (width * cos))
+    new_height = int((height * cos) + (width * sin))
+
+    M[0, 2] += (new_width / 2) - center[0]
+    M[1, 2] += (new_height / 2) - center[1]
+
+
+    res = cv2.warpAffine(rotated, M, (new_width, new_height)) 
+
+
+    new_label_box = np.hstack((new_label_box, np.ones((4,1)))) @ M.T
+
+
+
+
+
+    res_z = np.zeros_like(res)
+    mask1 = cv2.drawContours(res_z, [np.intp(new_label_box)], 0, (255,255,255), -1)
+    mask1 = cv2.bitwise_not(mask1)
+    res = res + mask1
+
+
+
+
+    new_label_box = np.intp(new_label_box)
+    x_min = new_label_box[:,0].min()
+    x_max = new_label_box[:,0].max()
+    y_min = new_label_box[:,1].min()
+    y_max = new_label_box[:,1].max()
+
+    new_label_crop = res[y_min:y_max, x_min:x_max]
+    #cv2.drawContours(res, [np.intp(new_label_box)], 0, (0,255,0),5)
+    #for b in new_boxes:
+    #    cv2.drawContours(res, [b], 0, (0,0,0), 7)
+
+    #cv2.putText(res, 'QR', np.intp(rects[mi][0]),
+    #                cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
+
+
+
+    #cv2.putText(res, 'W', np.intp(rects[ma][0]),
+    #                cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
+
+######################################################################
+
+
+
+    #text1  = ocr(img_copy,"./api_key", "folder_id", label_box=label_box)     
+    #text2  = ocr(img_copy_label,"./api_key", "folder_id", label_box=label_box)     
+    #text3  = ocr(new_label_crop,"./api_key", "folder_id", label_box=None)     
+
+    #text = list(set(text1 + text2 + text3))
+    #text = text3
+
+
+    #d = date(text)
+    #ind2 = index2(text)
+    #ind1 = index1(text)
+
 
 
 
@@ -117,6 +261,7 @@ for i in files:
     cv2.drawContours(img_copy, [cnt1], 0, (0,0,255), 5)
     cv2.drawContours(img_copy, [cnt2], 0, (255,0,0), 5)
     cv2.drawContours(img_copy, [label_box], 0, (0,0,255), 5)
+
 
     for c in cnt:
         rect = cv2.minAreaRect(c)
@@ -132,16 +277,17 @@ for i in files:
         cv2.putText(img_copy, f'w:{width} h:{height}', (x_min, y_min),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 0), 2)
 
-        cv2.drawContours(img_copy, [box], 0, (0,255,0),5)
+        #cv2.drawContours(img_copy, [box], 0, (0,255,0),5)
 
 
 
 
 
+    cv2.imwrite(os.path.join('./output4/',Path(i).stem + '.png'), new_label_crop)
     cv2.imwrite(os.path.join('./output3/',Path(i).stem + '.png'), img_copy)
     cv2.imwrite(os.path.join('./output2/',Path(i).stem + '.png'), packet_crop)
     cv2.imwrite(os.path.join('./output1/',Path(i).stem + '.png'), label_crop)
 
-    print(f'{i}\t{ind1}_{ind2}\t{img.shape[0:2]}\t{text}', file=f)
+    #print(f'{i}\t{ind1}_{ind2}\t{img.shape[0:2]}\t{text}', file=f)
 
 f.close()
