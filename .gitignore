@@ -224,4 +224,4 @@ __marimo__/
 *.synctex.gz
 
 #Keys
-./keys/
+keys/
