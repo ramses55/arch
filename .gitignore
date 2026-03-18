@@ -222,3 +222,6 @@ __marimo__/
 *.fls
 *.log
 *.synctex.gz
+
+#Keys
+./keys/
