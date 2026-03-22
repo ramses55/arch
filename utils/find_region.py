@@ -61,7 +61,7 @@ def find_region(img: np.ndarray,
                 ) -> np.ndarray:
 
     '''
-    This function fills with white area not in between to rulers and returns
+    This function fills with white area not in between two rulers and returns
     this image
 
 
@@ -80,6 +80,10 @@ def find_region(img: np.ndarray,
     pos1 = ruler_pos(img, cnt1)
     pos2 = ruler_pos(img, cnt2)
 
+
+    if pos1[0] == pos2[0]:
+        return None
+
     if pos1[0] == 'horizontal':
         posh = pos1
         posv = pos2
@@ -87,15 +91,41 @@ def find_region(img: np.ndarray,
         posh = pos2
         posv = pos1
 
-    x_min = max(posh[2][:,0].min(), 0)
-    x_max = min(posh[2][:,0].max(), img.shape[1])
+    #x_min = max(posh[2][:,0].min(), 0)
+    #x_max = min(posh[2][:,0].max(), img.shape[1])
 
-    y_min = max(posv[2][:,1].min(), 0)
-    y_max = min(posv[2][:,1].max(), img.shape[0])
+    #y_min = max(posv[2][:,1].min(), 0)
+    #y_max = min(posv[2][:,1].max(), img.shape[0])
+
+
+    if posv[1] == 'right':
+        x_max = np.sort(posv[2][:,0])[1].item()
+        x_min = np.sort(posh[2][:,0])[0].item()
+    #if on the left
+    else:
+        x_min = np.sort(posv[2][:,0])[-2].item()
+        x_max = np.sort(posh[2][:,0])[-1].item()
+
+    if posh[1] == 'top':
+        y_min = np.sort(posh[2][:,1])[-2].item()
+        y_max = np.sort(posv[2][:,1])[-1].item()
+    #if at the bottom
+    else:
+        y_max = np.sort(posh[2][:,1])[1].item()
+        y_min = np.sort(posv[2][:,1])[0].item()
+
+    
+    x_min = max(x_min,0)
+    x_max = min(x_max, img.shape[1])
+
+    y_min = max(y_min, 0)
+    y_max = min(y_max, img.shape[0])
 
     mask = np.ones_like(img, dtype=bool)
 
     mask[y_min:y_max,x_min:x_max] = False
+
+    #print((x_max-x_min) * (y_max - y_min))
 
     
     img[mask] = 255

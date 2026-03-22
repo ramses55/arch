@@ -196,7 +196,7 @@ def find_label(image: np.ndarray,
                                        )
     
     #value to filter very small areas
-    h = min(image.shape[0:2])/50
+    h = min(image.shape[0:2])/100
     
     new_cnts = list()
     new_hierarchy = list()
@@ -204,7 +204,7 @@ def find_label(image: np.ndarray,
     
     #drop contours
     for i,cnt in enumerate(cnts):
-        cnt = cv2.convexHull(cnt)
+        cnt = cv2.convexHull(cnt) # needed because of qr code
         area = cv2.contourArea(cnt)
         rect = cv2.minAreaRect(cnt)
         rect_w, rect_h = rect[1]
@@ -213,8 +213,9 @@ def find_label(image: np.ndarray,
         #drop conts with small area or no parents in cv2.RETR_CCOMP hierarchy
         if area > h*h and hierarchy[0][i][3]!=-1:
 
-            #drop cnts different from rectangle in terms of area
-            if area / min_rect_area > 0.8:
+            #drop cnts different from square
+            if area / min_rect_area > 0.8 and \
+                    min(rect[1]) / max (rect[1]) > 0.8:
                 new_cnts.append(cnt)
                 new_hierarchy.append(hierarchy[0][i])
                 areas.append(area)
@@ -223,7 +224,10 @@ def find_label(image: np.ndarray,
     areas = np.array(areas)
 
     #gets contour with the largest area
-    m = np.argmax(areas)
+    try:
+        m = np.argmax(areas)
+    except:
+        return None
     
 
     label_rect = cv2.minAreaRect(new_cnts[m])
@@ -311,6 +315,8 @@ def orient_label(label_crop: np.ndarray) -> np.ndarray:
         y_max = new_box[:,1].max()
 
         crop = label_crop[y_min:y_max, x_min:x_max]
+        if crop.shape[0] * crop.shape[1] == 0:
+            return None
         black=cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY).sum()
         blacks[j] = black
 
@@ -339,6 +345,7 @@ def orient_label(label_crop: np.ndarray) -> np.ndarray:
 
 
 
+    #TODO: should be one rotation instead of two
     o_label = cv2.rotate(label_crop, rota_arg[arg])
     o_label = cv2.rotate(o_label, cv2.ROTATE_90_CLOCKWISE)
 

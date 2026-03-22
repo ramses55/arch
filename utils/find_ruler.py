@@ -17,15 +17,15 @@ def find_ruler(image: np.ndarray,
     
     # Initiate SIFT detector
     feat = cv2.ORB_create(
-        nfeatures=5000,        # High feature count
-        scaleFactor=1.15,      # Finer scale pyramid (SIFT-like)
-        nlevels=12,            # More scale levels
-        edgeThreshold=15,      # Detect closer to borders
+        nfeatures=5000,        
+        scaleFactor=1.15,     
+        nlevels=12,          
+        edgeThreshold=15,   
         firstLevel=0,
         WTA_K=2,
-        scoreType=cv2.ORB_HARRIS_SCORE,  # More stable than FAST score
+        scoreType=cv2.ORB_HARRIS_SCORE,  
         patchSize=31,
-        fastThreshold=7        # Sensitive detector (important)
+        fastThreshold=7        
     )
 
     template = preprocess(template)
