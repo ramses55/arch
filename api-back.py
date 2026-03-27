@@ -3,10 +3,10 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 
-with open("../keys/s3-key-id", "r") as f:
+with open("./keys/s3-key-id", "r") as f:
     access_key = f.readline().rstrip()
 
-with open("../keys/s3-key", "r") as f:
+with open("./keys/s3-key", "r") as f:
     secret_key = f.readline().rstrip()
 
 

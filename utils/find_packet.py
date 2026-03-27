@@ -318,6 +318,7 @@ def orient_label(label_crop: np.ndarray) -> np.ndarray:
         if crop.shape[0] * crop.shape[1] == 0:
             return None
         black=cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY).sum()
+        #black = -crop[crop == (0,0,0)].size
         blacks[j] = black
 
     mi = np.argmin(blacks)
