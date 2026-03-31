@@ -5,3 +5,4 @@ from .find_ruler_akaze import find_ruler_akaze
 from .find_region import find_region
 from .fragments_contours import fragments_contours
 from .ocr import ocr, index1, index2, date
+from .result import result
