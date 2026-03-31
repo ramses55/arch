@@ -82,6 +82,7 @@ while (True):
         success = cv2.imwrite(f"m-{os.path.basename(file_name)}", im)
         print(success)
         print(m,file=f)
+        #deletes message from queue
         response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
                                          ReceiptHandle=receipt_handle)
         

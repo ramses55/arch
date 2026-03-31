@@ -32,7 +32,7 @@ class result:
         label_rect = [(rect[0:2], rect[2:4], rect[4]/np.pi * 180) for rect in label_rect]
         label = [crop_rect(self.orig_image, rect) for rect in label_rect]
         self.label = [orient_label(l) for l in label] 
-        self.mes = np.array(self.label)[:,1].mean()/19
+        self.mes = np.array(np.array(self.label).shape[1:3]).mean()/19
         
         frag_rect = res.obb.xywhr[self.frag_ind].detach().cpu().numpy().reshape(-1,5)
         frag_rect = [(rect[0:2], rect[2:4], rect[4]/np.pi * 180) for rect in frag_rect]
