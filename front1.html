@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Table Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 60%;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    tr:hover {
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Database Table</h2>
+  <table id="data-table">
+    <thead>
+      <tr id="table-head"></tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+
+  <script>
+    async function loadTable() {
+      const response = await fetch("http://localhost:8000/data");
+      const data = await response.json();
+
+      if (data.length === 0) return;
+
+      const tableHead = document.getElementById("table-head");
+      const tableBody = document.getElementById("table-body");
+
+      // Create table headers dynamically
+      const columns = Object.keys(data[0]);
+      columns.forEach(col => {
+        const th = document.createElement("th");
+        th.innerText = col;
+        tableHead.appendChild(th);
+      });
+
+      // Create table rows
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+
+        columns.forEach(col => {
+          const td = document.createElement("td");
+          td.innerText = row[col];
+          tr.appendChild(td);
+        });
+
+        tableBody.appendChild(tr);
+      });
+    }
+
+    loadTable();
+  </script>
+
+</body>
+</html>
