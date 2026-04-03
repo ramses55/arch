@@ -4,6 +4,7 @@ import torch
 import ultralytics
 
 
+
 from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
 
@@ -104,6 +105,7 @@ class result:
 
     def draw(self):
         image = self.orig_image.copy()
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         for box,size,cl in zip(self.frag_box,self.size,self.names):
             cv2.drawContours(image, [box], 0, (0,255,0), 2)
 
@@ -137,4 +139,4 @@ class result:
             text = fl
             draw.text(position, text, font=font, fill=(0,0,0))
 
-        return np.array(img_pil)
+        return img_pil
