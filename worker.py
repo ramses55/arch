@@ -76,7 +76,7 @@ while (True):
         download_bucket_name = body_info["bucket"]
         file_name = body_info["key"]
         receipt_handle = message['ReceiptHandle']
-        local_name = "/tmp/" + file_name
+        local_name = "/tmp/" + "1.jpg"
         s3.download_file(download_bucket_name, file_name, local_name)
     
     
@@ -96,11 +96,8 @@ while (True):
             r = result(output[0])
             r.all()
             m = r.csv_res()
-            img_pil = r.draw()
+            buffer = r.draw()
 
-            buffer = io.BytesIO()
-            img_pil.save(buffer, format="PNG")
-            buffer.seek(0)
             #success = cv2.imwrite(f"m-{os.path.basename(file_name)}", im)
             #print(success)
             s3.upload_fileobj(buffer, upload_bucket_name, file_name)

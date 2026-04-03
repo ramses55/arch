@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import torch
 import ultralytics
+import io
 
 
 
@@ -139,4 +140,9 @@ class result:
             text = fl
             draw.text(position, text, font=font, fill=(0,0,0))
 
-        return img_pil
+        #img_pil.thumbnail((800,800))  # keeps aspect ratio
+            
+        buffer = io.BytesIO()
+        img_pil.save(buffer, format="JPEG", quality=50, optimize=True)
+        buffer.seek(0)
+        return buffer

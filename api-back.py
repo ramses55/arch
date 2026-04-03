@@ -10,10 +10,10 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 
-with open("../keys/s3-key-id", "r") as f:
+with open("./keys/s3-key-id", "r") as f:
     access_key = f.readline().rstrip()
 
-with open("../keys/s3-key", "r") as f:
+with open("./keys/s3-key", "r") as f:
     secret_key = f.readline().rstrip()
 
 
@@ -85,7 +85,7 @@ conn = MySQLdb.connect(
       db="db1",
       user="user1",
       passwd="yc7]i_&0fV!L[:SJlN+%CE4p|:UF?ir;%KE6",
-      ssl={'ca': '../.mysql/root.crt'})
+      ssl={'ca': './.mysql/root.crt'})
 
 
 
@@ -125,7 +125,6 @@ def get_data():
     rows = cur.fetchall()
     columns = [col[0] for col in cur.description]
     df = pd.DataFrame(rows, columns=columns)
-    print("df:",df)
     return df.to_dict(orient = "records")
     #return data
 
