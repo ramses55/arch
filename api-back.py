@@ -1,12 +1,19 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
+
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+import pandas as pd
+import MySQLdb
+
+
 import logging
 import boto3
 from botocore.exceptions import ClientError
 
-with open("./keys/s3-key-id", "r") as f:
+with open("../keys/s3-key-id", "r") as f:
     access_key = f.readline().rstrip()
 
-with open("./keys/s3-key", "r") as f:
+with open("../keys/s3-key", "r") as f:
     secret_key = f.readline().rstrip()
 
 
@@ -55,6 +62,79 @@ def create_presigned_post(
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+)
+
+
+
+
+data = [
+    {"name": "A", "value": 10},
+    {"name": "B", "value": 20},
+    {"name": "C", "value": 30},
+]
+
+
+conn = MySQLdb.connect(
+      host="rc1b-ojtel5k6c967smm2.mdb.yandexcloud.net",
+      port=3306,
+      db="db1",
+      user="user1",
+      passwd="yc7]i_&0fV!L[:SJlN+%CE4p|:UF?ir;%KE6",
+      ssl={'ca': '../.mysql/root.crt'})
+
+
+
+
+
+@app.get("/data")
+#async def get_data(
+#    skip: int = Query(0, ge=0),
+#    limit: int = Query(100, ge=1, le=1000),
+#    sort: str = None,
+#    filter_field: str = None,
+#    filter_value: str = None
+#):
+#    # Your database query here
+#    # df = pd.read_sql("SELECT * FROM your_table", conn)
+#    df = pd.DataFrame({'id': [1,2,3], 'name': ['A','B','C'], 'value': [10,20,30]})
+#    
+#    # Apply filters & sorting
+#    if filter_field and filter_value:
+#        df = df[df[filter_field].astype(str).str.contains(filter_value, case=False)]
+#    if sort:
+#        df = df.sort_values(sort)
+#    
+#    total = len(df)
+#    df = df.iloc[skip:skip+limit]
+#    
+#    return {"data": df.to_dict(orient="records"), "total": total}
+
+
+
+def get_data():
+
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM data")
+    conn.commit()
+    
+    rows = cur.fetchall()
+    columns = [col[0] for col in cur.description]
+    df = pd.DataFrame(rows, columns=columns)
+    print("df:",df)
+    return df.to_dict(orient = "records")
+    #return data
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_ui():
+    with open("templates/index.html") as f:
+        return HTMLResponse(content=f.read())
+
+
 
 
 @app.get("/image_url/{image_path}")
