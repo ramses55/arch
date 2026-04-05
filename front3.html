@@ -47,7 +47,7 @@
 </head>
 
 <body>
-<a href="./1.html">Upload</a>
+<a href="./front1.html">Upload</a>
 <h2>Interactive Table</h2>
 
 <input type="text" id="search" placeholder="Search...">
@@ -56,6 +56,14 @@
   <button onclick="downloadCSV()">Download CSV</button>
   <button onclick="downloadXLSX()">Download Excel</button>
 </div>
+
+
+
+<div>
+  <button onclick="downloadImages()">Download Images</button>
+</div>
+
+
 
 <div>
   <button onclick="prevPage()">Prev</button>
@@ -234,6 +242,12 @@ function downloadXLSX() {
 }
 
 
+// download images in zip file
+function downloadImages(){
+	let data = getFilteredData();
+	file_names = data.map(item => item["file_name"]);
+	console.log(file_names);
+}
 document.getElementById("rows-per-page").addEventListener("input", function () {
   rowsPerPage = parseInt(this.value) || 1;
   currentPage = 1; // reset to first page

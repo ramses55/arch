@@ -1,77 +1,86 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Table Viewer</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 60%;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: left;
-    }
-
-    th {
-      background-color: #f4f4f4;
-    }
-
-    tr:hover {
-      background-color: #f9f9f9;
-    }
-  </style>
-</head>
 <body>
 
-  <h2>Database Table</h2>
-  <table id="data-table">
-    <thead>
-      <tr id="table-head"></tr>
-    </thead>
-    <tbody id="table-body"></tbody>
-  </table>
+<input type="file" id="fileInput" multiple style="display:none" />
 
-  <script>
-    async function loadTable() {
-      const response = await fetch("http://localhost:8000/data");
-      const data = await response.json();
+<button onclick="openPicker()">Choose Files</button>
+<button onclick="uploadFiles()">Upload</button>
 
-      if (data.length === 0) return;
+<ul id="fileList"></ul>
 
-      const tableHead = document.getElementById("table-head");
-      const tableBody = document.getElementById("table-body");
+<script>
+let selectedFiles = [];
 
-      // Create table headers dynamically
-      const columns = Object.keys(data[0]);
-      columns.forEach(col => {
-        const th = document.createElement("th");
-        th.innerText = col;
-        tableHead.appendChild(th);
-      });
+function openPicker() {
+    document.getElementById("fileInput").click();
+}
 
-      // Create table rows
-      data.forEach(row => {
-        const tr = document.createElement("tr");
+document.getElementById("fileInput").addEventListener("change", (e) => {
+    selectedFiles = Array.from(e.target.files);
 
-        columns.forEach(col => {
-          const td = document.createElement("td");
-          td.innerText = row[col];
-          tr.appendChild(td);
-        });
+    const list = document.getElementById("fileList");
+    list.innerHTML = "";
 
-        tableBody.appendChild(tr);
-      });
+    selectedFiles.forEach(file => {
+        const li = document.createElement("li");
+        li.textContent = file.name;
+        list.appendChild(li);
+    });
+});
+
+async function uploadFiles() {
+    if (selectedFiles.length === 0) {
+        alert("No files selected");
+        return;
     }
 
-    loadTable();
-  </script>
+    for (let file of selectedFiles) {
+        try {
+            // 1️⃣ Get signed URL for THIS file
+            const res = await fetch(
+                `http://localhost:8000/image_url/${encodeURIComponent(file.name)}`,
+                { method: "GET" }
+            );
+
+            const data = await res.json();
+            const signedUrl = data.url;
+	    console.log(signedUrl)
+
+            // 2️⃣ Upload file directly to storage
+            // 1. Add ALL fields from the signed policy
+
+            const formData = new FormData();
+            for (const [key, value] of Object.entries(data.fields)) {
+              formData.append(key, value);
+            }
+            
+            // 2. Add the file LAST
+
+            formData.append("file", file);
+
+
+            await fetch(signedUrl, {
+                method: "POST", // must match backend signing
+                //headers: {
+                //    "Content-Type": file.type
+                //},
+                body: formData
+            });
+
+            console.log(`Uploaded: ${file.name}`);
+
+        } catch (err) {
+            console.error(`Failed: ${file.name}`, err);
+        }
+    }
+
+    alert("All uploads finished");
+}
+</script>
+
+
 
 </body>
 </html>
+
