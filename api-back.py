@@ -1,7 +1,8 @@
 from fastapi import FastAPI, Query
-
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
+from typing import List
 import pandas as pd
 import MySQLdb
 
@@ -16,6 +17,9 @@ with open("./keys/s3-key-id", "r") as f:
 with open("./keys/s3-key", "r") as f:
     secret_key = f.readline().rstrip()
 
+
+with open("./keys/mysql_pass", "r") as f:
+    mysql_pass = f.readline().rstrip()
 
 bucket_name = "full-images"
 
@@ -63,6 +67,11 @@ def create_presigned_post(
 
 app = FastAPI()
 
+class FileRequest(BaseModel):
+    files: List[str]
+
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -84,7 +93,7 @@ conn = MySQLdb.connect(
       port=3306,
       db="db1",
       user="user1",
-      passwd="yc7]i_&0fV!L[:SJlN+%CE4p|:UF?ir;%KE6",
+      passwd=mysql_pass,
       ssl={'ca': './.mysql/root.crt'})
 
 
@@ -128,11 +137,11 @@ def get_data():
     return df.to_dict(orient = "records")
     #return data
 
-@app.get("/", response_class=HTMLResponse)
-async def serve_ui():
-    with open("templates/index.html") as f:
-        return HTMLResponse(content=f.read())
-
+#@app.get("/", response_class=HTMLResponse)
+#async def serve_ui():
+#    with open("templates/index.html") as f:
+#        return HTMLResponse(content=f.read())
+#
 
 
 
@@ -140,3 +149,9 @@ async def serve_ui():
 async def basic(image_path: str):
     response = create_presigned_post(image_path)
     return response
+
+
+@app.post("/downloadImages")
+async def imageDownload(data: FileRequest):
+    print(data.files)
+    

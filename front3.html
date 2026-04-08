@@ -246,8 +246,17 @@ function downloadXLSX() {
 function downloadImages(){
 	let data = getFilteredData();
 	file_names = data.map(item => item["file_name"]);
+	fetch("http://localhost:8000/downloadImages", {
+  		method: "POST",
+  		headers: {
+    			"Content-Type": "application/json"
+  		},
+  		body: JSON.stringify({ files: file_names })
+		});
 	console.log(file_names);
 }
+
+
 document.getElementById("rows-per-page").addEventListener("input", function () {
   rowsPerPage = parseInt(this.value) || 1;
   currentPage = 1; // reset to first page

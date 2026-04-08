@@ -16,6 +16,8 @@ with open("./keys/s3-key", "r") as f:
     secret_key = f.readline().rstrip()
 
 
+with open("./keys/mysql_pass", "r") as f:
+    mysql_pass = f.readline().rstrip()
 
 s3 = boto3.client(service_name='s3',
                          endpoint_url='https://storage.yandexcloud.net',
@@ -44,7 +46,7 @@ pool = pooling.MySQLConnectionPool(
     host="rc1b-ojtel5k6c967smm2.mdb.yandexcloud.net",
     port = 3306,
     user="user1",
-    password= "yc7]i_&0fV!L[:SJlN+%CE4p|:UF?ir;%KE6",
+    password= mysql_pass,
     database="db1"
 )
 upload_bucket_name = "marked"
