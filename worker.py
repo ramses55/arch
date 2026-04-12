@@ -67,86 +67,87 @@ while (True):
     if 'Messages' in response:
         #print(response['Messages'])
         print("Got a message!")
+        print(response)
     else:
         print("No messages yet!")
         continue
 
 
 
-    for message in response["Messages"]:
-        body_info = json.loads(message["Body"])
-        download_bucket_name = body_info["bucket"]
-        file_name = body_info["key"]
-        receipt_handle = message['ReceiptHandle']
-        local_name = "/tmp/" + "1.jpg"
-        s3.download_file(download_bucket_name, file_name, local_name)
-    
-    
-    
-        model = ultralytics.YOLO("./best.pt")
-        
-        time.sleep(0.5)
-        print(local_name)
-        output = model(local_name,
-                    conf=0.1,
-                    save=False,
-                    show=False,
-                    verbose=False)
-        
-        try:
-            # Code that might fail
-            r = result(output[0])
-            r.all()
-            m = r.csv_res()
-            buffer = r.draw()
+    #for message in response["Messages"]:
+    #    body_info = json.loads(message["Body"])
+    #    download_bucket_name = body_info["bucket"]
+    #    file_name = body_info["key"]
+    #    receipt_handle = message['ReceiptHandle']
+    #    local_name = "/tmp/" + "1.jpg"
+    #    s3.download_file(download_bucket_name, file_name, local_name)
+    #
+    #
+    #
+    #    model = ultralytics.YOLO("./best.pt")
+    #    
+    #    time.sleep(0.5)
+    #    print(local_name)
+    #    output = model(local_name,
+    #                conf=0.1,
+    #                save=False,
+    #                show=False,
+    #                verbose=False)
+    #    
+    #    try:
+    #        # Code that might fail
+    #        r = result(output[0])
+    #        r.all()
+    #        m = r.csv_res()
+    #        buffer = r.draw()
 
-            #success = cv2.imwrite(f"m-{os.path.basename(file_name)}", im)
-            #print(success)
-            s3.upload_fileobj(buffer, upload_bucket_name, file_name)
-
-
-
-            #deletes message from queue
-            response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
-                                             ReceiptHandle=receipt_handle)
+    #        #success = cv2.imwrite(f"m-{os.path.basename(file_name)}", im)
+    #        #print(success)
+    #        s3.upload_fileobj(buffer, upload_bucket_name, file_name)
 
 
-            conn = pool.get_connection()
-            cursor = conn.cursor()
 
-            update_query = """
-                                UPDATE data
-                                SET status = "FINISHED", result = %s
-                                WHERE file_name = %s
-                            """
+    #        #deletes message from queue
+    #        response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
+    #                                         ReceiptHandle=receipt_handle)
 
-            values = (m, file_name)
-            cursor.execute(update_query, values)
-            conn.commit()
 
-            cursor.close()
-            conn.close()  
-        except Exception as e:
-            # 'e' is the exception instance
-            #print(f"An error occurred: {e}")
-            #print(f"Error type: {type(e).__name__}")
-        
+    #        conn = pool.get_connection()
+    #        cursor = conn.cursor()
 
-            conn = pool.get_connection()
-            cursor = conn.cursor()
+    #        update_query = """
+    #                            UPDATE data
+    #                            SET status = "FINISHED", result = %s
+    #                            WHERE file_name = %s
+    #                        """
 
-            update_query = """
-                                UPDATE data
-                                SET status = "FAILED", result = %s
-                                WHERE file_name = %s
-                            """
+    #        values = (m, file_name)
+    #        cursor.execute(update_query, values)
+    #        conn.commit()
 
-            values = (str(e), file_name)
-            cursor.execute(update_query, values)
-            conn.commit()
+    #        cursor.close()
+    #        conn.close()  
+    #    except Exception as e:
+    #        # 'e' is the exception instance
+    #        #print(f"An error occurred: {e}")
+    #        #print(f"Error type: {type(e).__name__}")
+    #    
 
-            cursor.close()
-            conn.close()  
-            response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
-                                             ReceiptHandle=receipt_handle)
+    #        conn = pool.get_connection()
+    #        cursor = conn.cursor()
+
+    #        update_query = """
+    #                            UPDATE data
+    #                            SET status = "FAILED", result = %s
+    #                            WHERE file_name = %s
+    #                        """
+
+    #        values = (str(e), file_name)
+    #        cursor.execute(update_query, values)
+    #        conn.commit()
+
+    #        cursor.close()
+    #        conn.close()  
+    #        response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
+    #                                         ReceiptHandle=receipt_handle)
         
