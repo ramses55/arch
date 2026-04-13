@@ -63,7 +63,6 @@ def mkdir(dirname: str):
                      params = params,
                      headers = headers
                      )
-    print(r.json())
     return r.status_code
 
 
@@ -171,13 +170,13 @@ def download(path: str):
         if r1.status_code == 200:
             with open(f"image.{ext}", "wb") as f:
                 f.write(r1.content)
-
-    return (r.status_code, r1.status_code)
-
-
+                return (r.status_code, r1.status_code)
+    return r.status_code
 
 
-def upload(filename: str,
+
+
+def upload(buffer,
            path: str):
     '''
         This function uploads the file
@@ -206,8 +205,8 @@ def upload(filename: str,
 
     if r.status_code == 200:
         upload_url = r.json()['href']
-        with open(filename, "rb") as f:
-            r1 = requests.put(url = upload_url, files = {"file": f})
+        #with open(filename, "rb") as f:
+        r1 = requests.put(url = upload_url, data=buffer)
 
     return (r.status_code, r1.status_code)
 

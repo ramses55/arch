@@ -7,6 +7,7 @@ from utils import result
 import json
 from mysql.connector import pooling
 import io
+from utils import ls, mv, download, upload
 
 
 with open("./keys/s3-key-id", "r") as f:
@@ -79,9 +80,13 @@ while (True):
         path = body_info["path"]
         filename = body_info["filename"]
         receipt_handle = message['ReceiptHandle']
+        code=download(path)
+        if code != 200:
+            print(f"Error: {code}")
+            break
+
         ext = filename.split('.')[-1]
-        local_name = "/tmp/" + "1." + ext
-    
+        local_name = f"image.{ext}"    
     
     
         model = ultralytics.YOLO("./best.pt")
@@ -100,6 +105,9 @@ while (True):
             r.all()
             m = r.csv_res()
             buffer = r.draw()
+            new_path = "disk:/Приложения/arch_fragments/ok/marked/"+filename
+            upload(buffer, new_path)
+            mv(path, "ok/orig")
 
             #deletes message from queue
             response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
@@ -122,9 +130,8 @@ while (True):
             #cursor.close()
             #conn.close()  
         except Exception as e:
-            # 'e' is the exception instance
-            #print(f"An error occurred: {e}")
-            #print(f"Error type: {type(e).__name__}")
+            print(f"An error occurred: {e}")
+            print(f"Error type: {type(e).__name__}")
         
 
             #conn = pool.get_connection()
