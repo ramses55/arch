@@ -2,19 +2,20 @@ import requests
 import time
 import boto3
 import json
+import os
 from datetime import datetime
 
 
 
-with open("../keys/oauth_token") as f:
+with open("./keys/oauth_token") as f:
     oauth_token = f.readline().rstrip()
 
 
 
-with open("../keys/s3-key-id", "r") as f:
+with open("./keys/s3-key-id", "r") as f:
     access_key = f.readline().rstrip()
 
-with open("../keys/s3-key", "r") as f:
+with open("./keys/s3-key", "r") as f:
     secret_key = f.readline().rstrip()
 
 
@@ -108,6 +109,8 @@ def ls(dirname: str,
                         params=params
                         )
 
+        if r.status_code != 200:
+            break
         items = r.json()['_embedded']['items']
         for item in items:
             if item['type'] == 'file':
@@ -139,11 +142,116 @@ def push_to_queue(files: list):
         )
 
 
-def mv(file,
+
+def download(path: str):
+    '''
+        This function downloads the file
+
+        Args:
+            path (str): path of a file to be downloaded
+        
+        Returns:
+            exit_codes (tuple): (exit_code1, exit_code2)
+    '''
+
+    url = "https://cloud-api.yandex.net/v1/disk/resources/download"
+    headers = {"Authorization": f'OAuth {oauth_token}'}
+    params = {'path': f'{path}'}
+
+    r = requests.get(url = url,
+                     headers = headers,
+                     params = params
+                     )
+
+
+    ext = path.split(".")[-1]
+    if r.status_code == 200:
+        download_url = r.json()['href']
+        r1 = requests.get(url = download_url)
+        if r1.status_code == 200:
+            with open(f"image.{ext}", "wb") as f:
+                f.write(r1.content)
+
+    return (r.status_code, r1.status_code)
+
+
+
+
+def upload(filename: str,
+           path: str):
+    '''
+        This function uploads the file
+
+        Args:
+            filename (str): local file name
+            path (str): path of a file to be uploaded
+
+
+        Returns:
+            exit_codes (tuple): (exit_code1, exit_code2)
+    '''
+
+
+    url = "https://cloud-api.yandex.net/v1/disk/resources/upload"
+    headers = {"Authorization": f'OAuth {oauth_token}'}
+    params = {'path': f'{path}',
+              'overwrite': 'true'
+              }
+
+    r = requests.get(url = url,
+                     headers = headers,
+                     params = params
+                     )
+
+
+    if r.status_code == 200:
+        upload_url = r.json()['href']
+        with open(filename, "rb") as f:
+            r1 = requests.put(url = upload_url, files = {"file": f})
+
+    return (r.status_code, r1.status_code)
+
+
+
+
+
+
+
+def mv(filepath: str,
        dirname: str
        ):
     '''
         This function moves file from its old path to
-        'disk:/Приложения/{dirname}/{filename}'
+        'disk:/Приложения/arch_fragments/{dirname}/{filename}'
+
+        Args:
+            filepath (str): path of the file in yandex disk
+            dirname (str): directory name to move file into
+
+        Returns:
+            status_code (int): status code
     '''
-    pass
+    filename = os.path.basename(filepath)
+    path = f"disk:/Приложения/arch_fragments/{dirname}/{filename}"
+
+
+    url = "https://cloud-api.yandex.net/v1/disk/resources/move"
+    headers = {"Authorization": f'OAuth {oauth_token}'}
+    params = {
+                'from': f"{filepath}",
+                'path': f'{path}',
+                'overwrite': 'true',
+                'force_async': 'true'
+              }
+
+    r = requests.post(url=url,
+                     headers=headers,
+                     params=params,
+                     )
+
+    print(r.json())
+    return r.status_code
+
+
+
+
