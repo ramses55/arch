@@ -88,11 +88,14 @@ def ls(dirname: str,
     files = []
     if not hasattr(ls, "latest"):
             ls.latest = 0
+    if not hasattr(ls, "old"):
+        ls.old = []
 
     items = ['l']
 
     while (len(items) != 0):
-        #print(f'latest--{ls.latest}')
+        print(f'latest--{ls.latest}')
+        print(len(items))
         time.sleep(0.1) 
         params = {
                 'path':  f'disk:/Приложения/arch_fragments/{dirname}',
@@ -114,10 +117,15 @@ def ls(dirname: str,
         for item in items:
             if item['type'] == 'file':
                 epoch = int(datetime.fromisoformat(item['modified']).timestamp())
-                #print(epoch)
+                print(epoch)
                 if epoch > ls.latest:
-                    ls.latest = epoch
-                    files.append((item['path'], item['name']))
+                    if epoch - ls.latest > 10:
+                        ls.old = []
+                    ls.latest = epoch - 1
+                    if item['name'] not in ls.old:
+                        files.append((item['path'], item['name']))
+                        ls.old.append(item["name"])
+                        print(item['name'])
         offset += len(items)
 
 
@@ -170,8 +178,12 @@ def download(path: str):
         if r1.status_code == 200:
             with open(f"image.{ext}", "wb") as f:
                 f.write(r1.content)
-                return (r.status_code, r1.status_code)
-    return r.status_code
+        else:
+            return r1.status_code
+    else:
+        return r.status_code
+
+    return 200
 
 
 
@@ -207,8 +219,10 @@ def upload(buffer,
         upload_url = r.json()['href']
         #with open(filename, "rb") as f:
         r1 = requests.put(url = upload_url, data=buffer)
+        return r1.status_code
+    else:
+        return r.status_code
 
-    return (r.status_code, r1.status_code)
 
 
 
@@ -248,7 +262,7 @@ def mv(filepath: str,
                      params=params,
                      )
 
-    print(r.json())
+    #print(r.json())
     return r.status_code
 
 

@@ -83,6 +83,9 @@ while (True):
         code=download(path)
         if code != 200:
             print(f"Error: {code}")
+            mv(path, "failed/orig")
+            response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
+                                             ReceiptHandle=receipt_handle)
             break
 
         ext = filename.split('.')[-1]
