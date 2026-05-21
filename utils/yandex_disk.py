@@ -94,8 +94,8 @@ def ls(dirname: str,
     items = ['l']
 
     while (len(items) != 0):
-        print(f'latest--{ls.latest}')
-        print(len(items))
+        #print(f'latest--{ls.latest}')
+        #print(len(items))
         time.sleep(0.1) 
         params = {
                 'path':  f'disk:/Приложения/arch_fragments/{dirname}',

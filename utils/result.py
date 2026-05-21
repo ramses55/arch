@@ -16,7 +16,7 @@ from .dirt import dirty
 from .char import charred
 
 class result:
-    def __init__(self, res):
+    def __init__(self, res, filename):
         #label  indices
         self.label_ind = torch.argwhere(res.obb.cls == 0).squeeze() 
         #fragments indices
@@ -55,8 +55,7 @@ class result:
         self.charred = []
         self.dirty = []
 
-        self.old_filename = Path(res.path).stem
-        
+        self.old_filename = filename        
 
     
     def use_ocr(self,
@@ -82,7 +81,7 @@ class result:
         
 
     def all(self):
-        self.use_ocr()
+        #self.use_ocr()
         self.check_charred()
         self.check_dirty()
 

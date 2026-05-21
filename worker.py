@@ -66,9 +66,8 @@ while (True):
     )
     
     if 'Messages' in response:
-        #print(response['Messages'])
         print("Got a message!")
-        print(response)
+        #print(response)
     else:
         print("No messages yet!")
         continue
@@ -104,7 +103,7 @@ while (True):
         
         try:
             # Code that might fail
-            r = result(output[0])
+            r = result(output[0], filename)
             r.all()
             m = r.csv_res()
             buffer = r.draw()
@@ -117,21 +116,23 @@ while (True):
                                              ReceiptHandle=receipt_handle)
 
 
-            #conn = pool.get_connection()
-            #cursor = conn.cursor()
+            conn = pool.get_connection()
+            cursor = conn.cursor()
 
-            #update_query = """
-            #                    UPDATE data
-            #                    SET status = "FINISHED", result = %s
-            #                    WHERE file_name = %s
-            #                """
+            insert_query = """
+                                INSERT INTO data (file_name, status, result)
+                                VALUES (%s, %s, %s)
+                                ON DUPLICATE KEY UPDATE result = VALUES(result)
+                            """
 
-            #values = (m, filename)
-            #cursor.execute(update_query, values)
-            #conn.commit()
+            values = (filename, "DONE", m)
 
-            #cursor.close()
-            #conn.close()  
+            cursor.execute(insert_query, values)
+            conn.commit()
+
+            cursor.close()
+            conn.close()  
+
         except Exception as e:
             print(f"An error occurred: {e}")
             print(f"Error type: {type(e).__name__}")
