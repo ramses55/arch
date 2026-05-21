@@ -4,6 +4,7 @@ import boto3
 import json
 import os
 from datetime import datetime
+import csv
 
 
 
@@ -87,7 +88,7 @@ def ls(dirname: str,
     offset = 0
     files = []
     if not hasattr(ls, "latest"):
-            ls.latest = 0
+        ls.latest = 0
     if not hasattr(ls, "old"):
         ls.old = []
 
@@ -217,7 +218,6 @@ def upload(buffer,
 
     if r.status_code == 200:
         upload_url = r.json()['href']
-        #with open(filename, "rb") as f:
         r1 = requests.put(url = upload_url, data=buffer)
         return r1.status_code
     else:
@@ -262,9 +262,128 @@ def mv(filepath: str,
                      params=params,
                      )
 
-    #print(r.json())
     return r.status_code
 
 
 
+def ls_s(dirname: str,
+       limit: int = 999
+       ):
+    '''
+        This function list files in the directory
+        "disk:/Приложения/arch_fragments/{dirname}", simple version of ls.
+        Different function is used to eliminate work with ls attributes like 
+        .old and .latest
 
+
+        Args:
+            dirname (str): name of directory 
+
+        Returns:
+            files (list): list of files
+            
+
+    '''
+    url = "https://cloud-api.yandex.net/v1/disk/resources"
+    headers = {"Authorization": f'OAuth {oauth_token}'}
+    offset = 0
+    files = []
+
+    items = ['l']
+
+    while (len(items) != 0):
+        #print(f'latest--{ls.latest}')
+        #print(len(items))
+        time.sleep(0.1) 
+        params = {
+                'path':  f'disk:/Приложения/arch_fragments/{dirname}',
+                'fields':
+                '_embedded.items.path,_embedded.items.type,_embedded.items.name,_embedded.items.modified',
+                'limit': f'{limit}',
+                'offset': f'{offset}',
+                'sort': 'modified'
+                }
+
+        r = requests.get(url=url,
+                        headers=headers,
+                        params=params
+                        )
+
+        if r.status_code != 200:
+            break
+        items = r.json()['_embedded']['items']
+        for item in items:
+            if item['type'] == 'file':
+                files.append((item['path'], item['name']))
+
+        offset += len(items)
+
+
+    return files
+
+
+def make_csv(conn, suc=True):
+
+    if suc:
+        files = ls_s('ok/orig')
+        files = [f[1] for f in files]
+
+    if not suc:
+        files = ls_s('failed/orig')
+        files = [f[1] for f in files]
+
+    if not files:
+        return 0
+
+    placeholder = ", ".join(["%s"] * len(files))
+
+    get_table_q = f'''
+                    SELECT result
+                    FROM data
+                    WHERE status = %s AND file_name IN ({placeholder})
+                '''
+    
+    if suc:
+        filename = "ok.csv"
+        status = "DONE"
+        path = 'ok/ok.csv'
+    else:
+        filename = "failed.csv"
+        status = "FAILED"
+        path = 'failed/failed.csv'
+
+
+    cur = conn.cursor()
+    cur.execute(get_table_q, [status] + files)
+    
+    with open(filename, 'w', newline="") as f:
+        writer = csv.writer(f, delimiter = ",")
+    
+        writer.writerow(["Исходное имя файла", "Тип объекта", "Размер (мм)",
+                         "Загрязнение", "Обугливание", "Число объектов",
+                         "Путь к файлу"])
+    
+    
+        while True:
+            rows = cur.fetchmany(1000)
+    
+            if not rows:
+                break
+    
+            #flattens rows
+            new_rows = [c for b in rows for c in b]
+            for row in new_rows:
+                values = row.replace(",", ";").split("|")
+                writer.writerow(values)
+
+
+    with open(filename, "rb") as f:
+        buffer = f.read()
+
+    path = "disk:/Приложения/arch_fragments/" + path
+    code = upload(buffer, path)
+    print(code)
+
+    cur.close()
+    
+    return 1

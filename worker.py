@@ -7,7 +7,7 @@ from utils import result
 import json
 from mysql.connector import pooling
 import io
-from utils import ls, mv, download, upload
+from utils import ls, mv, download, upload, make_csv
 
 
 with open("./keys/s3-key-id", "r") as f:
@@ -79,63 +79,73 @@ while (True):
         path = body_info["path"]
         filename = body_info["filename"]
         receipt_handle = message['ReceiptHandle']
-        code=download(path)
-        if code != 200:
-            print(f"Error: {code}")
-            mv(path, "failed/orig")
+
+        if filename == '-' and path == '-':
+            conn = pool.get_connection()
+            make_csv(conn, True)
+            make_csv(conn, False)
             response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
                                              ReceiptHandle=receipt_handle)
-            break
-
-        ext = filename.split('.')[-1]
-        local_name = f"image.{ext}"    
-    
-    
-        model = ultralytics.YOLO("./best.pt")
-        
-        time.sleep(0.5)
-        print(local_name)
-        output = model(local_name,
-                    conf=0.1,
-                    save=False,
-                    show=False,
-                    verbose=False)
-        
-        r = result(output[0], filename)
-        r.all()
-        m = r.csv_res()
-        buffer = r.draw()
-        
-        
-        
-        conn = pool.get_connection()
-        cursor = conn.cursor()
-        
-        insert_query = """
-                            INSERT INTO data (file_name, status, result)
-                            VALUES (%s, %s, %s)
-                            ON DUPLICATE KEY UPDATE result = VALUES(result)
-                        """
-        
-        #checks if OCR worked correctly
-        if r.file_name[0] != 'OCR failed!':
-            values = (filename, "DONE", m)
-            new_path = "disk:/Приложения/arch_fragments/ok/marked/"+filename
-            upload(buffer, new_path)
-            mv(path, "ok/orig")
+            conn.close()
         else:
-            new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
-            upload(buffer, new_path)
-            mv(path, "failed/orig")
-            values = (filename, "FAILED", m)
-        
-        cursor.execute(insert_query, values)
-        conn.commit()
-        
-        cursor.close()
-        conn.close()  
+
+            code=download(path)
+            if code != 200:
+                print(f"Error: {code}")
+                mv(path, "failed/orig")
+                response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
+                                                 ReceiptHandle=receipt_handle)
+                break
+
+            ext = filename.split('.')[-1]
+            local_name = f"image.{ext}"    
+    
+    
+            model = ultralytics.YOLO("./best.pt")
+            
+            time.sleep(0.5)
+            print(local_name)
+            output = model(local_name,
+                        conf=0.1,
+                        save=False,
+                        show=False,
+                        verbose=False)
+            
+            r = result(output[0], filename)
+            r.all()
+            m = r.csv_res()
+            buffer = r.draw()
+            
+            
+            
+            conn = pool.get_connection()
+            cursor = conn.cursor()
+            
+            insert_query = """
+                                INSERT INTO data (file_name, status, result)
+                                VALUES (%s, %s, %s)
+                                ON DUPLICATE KEY UPDATE result = VALUES(result)
+                            """
+            
+            #checks if OCR worked correctly
+            if r.file_name[0] == 'OCR failed!' or 'index' in r.file_name[0] or len(r.names) == 0 :
+                new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
+                upload(buffer, new_path)
+                mv(path, "failed/orig")
+                values = (filename, "FAILED", m)
+            else:
+                values = (filename, "DONE", m)
+                new_path = "disk:/Приложения/arch_fragments/ok/marked/"+filename
+                upload(buffer, new_path)
+                mv(path, "ok/orig")
+            
+            cursor.execute(insert_query, values)
+            conn.commit()
+            
+            cursor.close()
+            conn.close()  
 
 
-        #deletes message from queue
-        response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
-                                         ReceiptHandle=receipt_handle)
+            #deletes message from queue
+            response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
+                                             ReceiptHandle=receipt_handle)
