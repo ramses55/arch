@@ -101,58 +101,41 @@ while (True):
                     show=False,
                     verbose=False)
         
-        try:
-            # Code that might fail
-            r = result(output[0], filename)
-            r.all()
-            m = r.csv_res()
-            buffer = r.draw()
+        r = result(output[0], filename)
+        r.all()
+        m = r.csv_res()
+        buffer = r.draw()
+        
+        
+        
+        conn = pool.get_connection()
+        cursor = conn.cursor()
+        
+        insert_query = """
+                            INSERT INTO data (file_name, status, result)
+                            VALUES (%s, %s, %s)
+                            ON DUPLICATE KEY UPDATE result = VALUES(result)
+                        """
+        
+        #checks if OCR worked correctly
+        if r.file_name[0] != 'OCR failed!':
+            values = (filename, "DONE", m)
             new_path = "disk:/Приложения/arch_fragments/ok/marked/"+filename
             upload(buffer, new_path)
             mv(path, "ok/orig")
-
-            #deletes message from queue
-            response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
-                                             ReceiptHandle=receipt_handle)
-
-
-            conn = pool.get_connection()
-            cursor = conn.cursor()
-
-            insert_query = """
-                                INSERT INTO data (file_name, status, result)
-                                VALUES (%s, %s, %s)
-                                ON DUPLICATE KEY UPDATE result = VALUES(result)
-                            """
-
-            values = (filename, "DONE", m)
-
-            cursor.execute(insert_query, values)
-            conn.commit()
-
-            cursor.close()
-            conn.close()  
-
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            print(f"Error type: {type(e).__name__}")
+        else:
+            new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
+            upload(buffer, new_path)
+            mv(path, "failed/orig")
+            values = (filename, "FAILED", m)
         
-
-            #conn = pool.get_connection()
-            #cursor = conn.cursor()
-
-            #update_query = """
-            #                    UPDATE data
-            #                    SET status = "FAILED", result = %s
-            #                    WHERE file_name = %s
-            #                """
-
-            #values = (str(e), filename)
-            #cursor.execute(update_query, values)
-            #conn.commit()
-
-            #cursor.close()
-            #conn.close()  
-            response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
-                                             ReceiptHandle=receipt_handle)
+        cursor.execute(insert_query, values)
+        conn.commit()
         
+        cursor.close()
+        conn.close()  
+
+
+        #deletes message from queue
+        response_del = sqs.delete_message(QueueUrl=QUEUE_URL,
+                                         ReceiptHandle=receipt_handle)

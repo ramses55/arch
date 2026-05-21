@@ -208,10 +208,15 @@ def ocr(image: np.ndarray,
               "x-folder-id": folder_id,
               "x-data-logging-enabled": "true"}
       
-    w1 = requests.post(url=url,
-                       headers=headers,
-                       data=json.dumps(data1),
-                       timeout=10)
+    try:
+        w1 = requests.post(url=url,
+                           headers=headers,
+                           data=json.dumps(data1),
+                           timeout=10)
+
+    except requests.exceptions.ConnectionError:
+        print("OCR connection error!")
+        return None
     
     
     if w1.status_code != 200:

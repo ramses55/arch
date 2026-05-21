@@ -81,7 +81,7 @@ class result:
         
 
     def all(self):
-        #self.use_ocr()
+        self.use_ocr()
         self.check_charred()
         self.check_dirty()
 

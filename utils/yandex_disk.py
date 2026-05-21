@@ -117,7 +117,7 @@ def ls(dirname: str,
         for item in items:
             if item['type'] == 'file':
                 epoch = int(datetime.fromisoformat(item['modified']).timestamp())
-                print(epoch)
+                #print(epoch)
                 if epoch > ls.latest:
                     if epoch - ls.latest > 10:
                         ls.old = []
@@ -125,7 +125,7 @@ def ls(dirname: str,
                     if item['name'] not in ls.old:
                         files.append((item['path'], item['name']))
                         ls.old.append(item["name"])
-                        print(item['name'])
+                        #print(item['name'])
         offset += len(items)
 
 
