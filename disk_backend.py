@@ -10,6 +10,8 @@ mkdir('ok/marked')
 mkdir('failed/marked')
 mkdir('failed/orig')
 
+
+#push_to_queue([['-','-']])
 while True:
     time.sleep(5)
     files = ls("")

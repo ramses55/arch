@@ -44,7 +44,7 @@ sqs = boto3.client(
 pool = pooling.MySQLConnectionPool(
     pool_name="pool1",
     pool_size=5,
-    host="rc1b-ojtel5k6c967smm2.mdb.yandexcloud.net",
+    host="c-c9q17q3ljh50dlmtn19m.rw.mdb.yandexcloud.net",
     port = 3306,
     user="user1",
     password= mysql_pass,
@@ -122,22 +122,23 @@ while (True):
             cursor = conn.cursor()
             
             insert_query = """
-                                INSERT INTO data (file_name, status, result)
-                                VALUES (%s, %s, %s)
+                                INSERT INTO data (file_name, status, result, new_file_name)
+                                VALUES (%s, %s, %s, %s)
                                 ON DUPLICATE KEY UPDATE result = VALUES(result)
                             """
             
             #checks if OCR worked correctly
-            if r.file_name[0] == 'OCR failed!' or 'index' in r.file_name[0] or len(r.names) == 0 :
+            if not r.file_name or r.file_name[0] == 'OCR failed!' or 'index' in r.file_name[0] or len(r.names) == 0 :
                 new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
                 upload(buffer, new_path)
                 mv(path, "failed/orig")
-                values = (filename, "FAILED", m)
+                values = (filename, "FAILED", m, filename)
             else:
-                values = (filename, "DONE", m)
-                new_path = "disk:/Приложения/arch_fragments/ok/marked/"+filename
-                upload(buffer, new_path)
-                mv(path, "ok/orig")
+                new_file_name =  r.file_name[0] + '.' + ext
+                values = (filename, "DONE", m, new_file_name)
+                new_path ="disk:/Приложения/arch_fragments/ok/marked/" + new_file_name
+                print(upload(buffer, new_path))
+                print(mv(path, "ok/orig/" + new_file_name))
             
             cursor.execute(insert_query, values)
             conn.commit()

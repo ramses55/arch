@@ -231,11 +231,11 @@ def upload(buffer,
 
 
 def mv(filepath: str,
-       dirname: str
+       newpath: str
        ):
     '''
         This function moves file from its old path to
-        'disk:/Приложения/arch_fragments/{dirname}/{filename}'
+        'disk:/Приложения/arch_fragments/{newpath}'
 
         Args:
             filepath (str): path of the file in yandex disk
@@ -244,8 +244,8 @@ def mv(filepath: str,
         Returns:
             status_code (int): status code
     '''
-    filename = os.path.basename(filepath)
-    path = f"disk:/Приложения/arch_fragments/{dirname}/{filename}"
+    #filename = os.path.basename(filepath)
+    path = f"disk:/Приложения/arch_fragments/{newpath}"
 
 
     url = "https://cloud-api.yandex.net/v1/disk/resources/move"
@@ -337,24 +337,34 @@ def make_csv(conn, suc=True):
 
     placeholder = ", ".join(["%s"] * len(files))
 
-    get_table_q = f'''
+    get_table_ok = f'''
+                    SELECT result
+                    FROM data
+                    WHERE status = %s AND new_file_name IN ({placeholder})
+                '''
+
+
+
+    get_table_failed = f'''
                     SELECT result
                     FROM data
                     WHERE status = %s AND file_name IN ({placeholder})
                 '''
     
+
+    cur = conn.cursor()
     if suc:
         filename = "ok.csv"
         status = "DONE"
         path = 'ok/ok.csv'
+        cur.execute(get_table_ok, [status] + files)
     else:
         filename = "failed.csv"
         status = "FAILED"
         path = 'failed/failed.csv'
+        cur.execute(get_table_failed, [status] + files)
 
 
-    cur = conn.cursor()
-    cur.execute(get_table_q, [status] + files)
     
     with open(filename, 'w', newline="") as f:
         writer = csv.writer(f, delimiter = ",")
@@ -365,6 +375,7 @@ def make_csv(conn, suc=True):
     
     
         while True:
+            print(1)
             rows = cur.fetchmany(1000)
     
             if not rows:

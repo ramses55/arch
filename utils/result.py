@@ -142,6 +142,6 @@ class result:
         #img_pil.thumbnail((800,800))  # keeps aspect ratio
             
         buffer = io.BytesIO()
-        img_pil.save(buffer, format="JPEG", quality=50, optimize=True)
+        img_pil.save(buffer, format="JPEG", quality=70, optimize=True)
         buffer.seek(0)
         return buffer
