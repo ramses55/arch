@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     mysql_db: str
     access_key: str
     access_key_id: str
+    oauth_token: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

@@ -5,22 +5,20 @@ import json
 import os
 from datetime import datetime
 import csv
+from utils.config import settings
 
 
 
-with open("./keys/oauth_token") as f:
-    oauth_token = f.readline().rstrip()
+oauth_token = settings.oauth_token
 
 
 
-with open("./keys/s3-key-id", "r") as f:
-    access_key = f.readline().rstrip()
+access_key = settings.access_key_id
 
-with open("./keys/s3-key", "r") as f:
-    secret_key = f.readline().rstrip()
+secret_key = settings.access_key
 
 
-QUEUE_URL = "https://message-queue.api.cloud.yandex.net/b1gn2cep80rfd8mos87v/dj60000000ifp1rm0516/queue"
+QUEUE_URL = settings.queue_url
 
 sqs = boto3.client(
     "sqs",

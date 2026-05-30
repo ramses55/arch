@@ -7,4 +7,5 @@ from .fragments_contours import fragments_contours
 from .ocr import ocr, index1, index2, date
 from .result import result
 from .yandex_disk import mkdir, ls, ls_s, mv, upload, download, push_to_queue, make_csv
-from work import work
+from .work import work
+from .config import settings
