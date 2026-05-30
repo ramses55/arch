@@ -103,7 +103,7 @@ while (True):
     
             model = ultralytics.YOLO("./best.pt")
             
-            time.sleep(0.5)
+            #time.sleep(0.5)
             print(local_name)
             output = model(local_name,
                         conf=0.1,
@@ -137,8 +137,8 @@ while (True):
                 new_file_name =  r.file_name[0] + '.' + ext
                 values = (filename, "DONE", m, new_file_name)
                 new_path ="disk:/Приложения/arch_fragments/ok/marked/" + new_file_name
-                print(upload(buffer, new_path))
-                print(mv(path, "ok/orig/" + new_file_name))
+                print("upload code:", upload(buffer, new_path))
+                print("mv code:", mv(path, "ok/orig/" + new_file_name))
             
             cursor.execute(insert_query, values)
             conn.commit()
