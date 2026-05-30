@@ -1,0 +1,8 @@
+opencv-python-headless
+
+boto3
+Pillow
+requests
+
+uvicorn
+fastapi
