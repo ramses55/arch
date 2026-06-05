@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     access_key: str
     access_key_id: str
     oauth_token: str
+    folder_id: str
+    api_key: str
+    PORT: int
 
     model_config = SettingsConfigDict(env_file=".env")
 

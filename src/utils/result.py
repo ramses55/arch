@@ -12,6 +12,7 @@ from pathlib import Path
 
 from utils import crop_rect, orient_label, find_label
 from utils import ocr, index1, index2
+from utils.config import settings
 from .dirt import dirty
 from .char import charred
 
@@ -59,13 +60,13 @@ class result:
 
     
     def use_ocr(self,
-                apiKey_path = "./keys/api_key",
-                folderId_path = "./keys/folder_id",
+                apiKey = settings.api_key,
+                folderId = settings.folder_id,
                 packet_box=None,
                 label_box=None
                 ) -> list:
         for label in self.label:
-            text  = ocr(label, apiKey_path, folderId_path)
+            text  = ocr(label, apiKey, folderId)
             if text is not None:
                 self.file_name.append(index1(text) + "_" + index2(text))
             else:
@@ -115,7 +116,6 @@ class result:
         img_pil = Image.fromarray(image)
         draw = ImageDraw.Draw(img_pil)
         font = ImageFont.truetype("DejaVuSans.ttf",30)
-
 
         sizes = [f'({s[0]}*{s[1]})' for s in self.size]
         dr = {0: "нет загр", 1: "загр"}

@@ -6,3 +6,13 @@ requests
 
 uvicorn
 fastapi
+
+
+pydantic_settings
+
+mysql-connector-python
+#mysqlclient
+
+
+onnx
+onnxruntime

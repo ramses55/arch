@@ -10,14 +10,8 @@ from utils.config import settings
 
 
 oauth_token = settings.oauth_token
-
-
-
 access_key = settings.access_key_id
-
 secret_key = settings.access_key
-
-
 QUEUE_URL = settings.queue_url
 
 sqs = boto3.client(
@@ -140,7 +134,7 @@ def push_to_queue(files: list):
             files (list): list of tuples (filepath, filename)
     '''
     for file in files:
-        task = {"path": file[0], "filename": file[1]}
+        task = {'path': file[0], 'filename': file[1]}
         
         sqs.send_message(
             QueueUrl=QUEUE_URL,

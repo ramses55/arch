@@ -9,7 +9,7 @@ class dirty(torch.nn.Module):
         resnet = resnet18(weights='DEFAULT')
         resnet.fc = torch.nn.Linear(in_features=512, out_features=2, bias=True)
 
-        checkpoint = torch.load("./data-yolo/best-dirty.pth", weights_only=True)
+        checkpoint = torch.load("./weights/best-dirty.pth", weights_only=True)
         resnet.load_state_dict(checkpoint["model_state"])
         self.model = resnet
         self.mean=[0.485, 0.456, 0.406] #it's for ImageNet

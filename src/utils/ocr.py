@@ -152,8 +152,8 @@ def date(text: list) -> str:
 
 
 def ocr(image: np.ndarray,
-        apiKey_path: pathlib.PosixPath,
-        folderId_path: pathlib.PosixPath,
+        apiKey: str,
+        folderId: str,
         packet_box=None,
         label_box=None
         ) -> list:
@@ -176,13 +176,10 @@ def ocr(image: np.ndarray,
 
     '''
 
-    with open(apiKey_path, "r") as f:
-        token = f.read().strip('\n')
+    token = apiKey
     
     
-    with open(folderId_path, "r") as f:
-        folder_id = f.read().strip('\n')
-    
+    folder_id = folderId    
     
     # yandex cloud ocr expects encoded image as input
     success, buffer = cv2.imencode(".jpg", image)

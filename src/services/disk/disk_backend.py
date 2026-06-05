@@ -16,5 +16,6 @@ while True:
     time.sleep(5)
     files = ls("")
     push_to_queue(files)
+    print(files)
     if files:
         push_to_queue([['-','-']])

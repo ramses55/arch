@@ -30,8 +30,8 @@ def work(path, filename, pool):
     
         code=download(path)
         if code != 200:
-            print(f"Error: {code}")
-            mv(path, "failed/orig")
+            print(f"Error download: {code}")
+            mv(path, "failed/orig/")
 
             return 1
     
@@ -39,7 +39,7 @@ def work(path, filename, pool):
         local_name = f"image.{ext}"    
     
     
-        model = ultralytics.YOLO("./best.pt")
+        model = ultralytics.YOLO("./weights/best.pt")
         
         #time.sleep(0.5)
         print(local_name)
@@ -69,7 +69,7 @@ def work(path, filename, pool):
         if not r.file_name or r.file_name[0] == 'OCR failed!' or 'index' in r.file_name[0] or len(r.names) == 0 :
             new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
             upload(buffer, new_path)
-            mv(path, "failed/orig")
+            mv(path, "failed/orig/" + filename)
             values = (filename, "FAILED", m, filename)
         else:
             new_file_name =  r.file_name[0] + '.' + ext
