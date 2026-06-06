@@ -1,4 +1,4 @@
-from utils import push_to_queue, ls, ls_s, mkdir
+from utils import push_to_queue, ls_db, mkdir
 import time
 
 
@@ -14,7 +14,7 @@ mkdir('failed/orig')
 #push_to_queue([['-','-']])
 while True:
     time.sleep(5)
-    files = ls("")
+    files = ls_db("")
     push_to_queue(files)
     print(files)
     if files:

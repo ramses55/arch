@@ -52,6 +52,7 @@ async def startup():
         user=settings.mysql_user,
         password=settings.mysql_pass,
         database=settings.mysql_db,
+        connection_timeout=5,
         pool_size=5,
     )
 

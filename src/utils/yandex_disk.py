@@ -2,10 +2,12 @@ import requests
 import time
 import boto3
 import json
-import os
-from datetime import datetime
 import csv
+from datetime import datetime
 from utils.config import settings
+import mysql.connector
+from mysql.connector import Error
+
 
 
 
@@ -57,6 +59,91 @@ def mkdir(dirname: str):
                      headers = headers
                      )
     return r.status_code
+
+
+def ls_db(dirname: str,
+       limit: int = 999
+       ):
+    '''
+        This function fetches data for db and list files it did not see before.
+        It uses ls but gives it state.
+
+
+        Args:
+            dirname (str): name of directory 
+
+        Returns:
+            files (list): list of files
+
+    '''
+
+
+    try:
+        print("Trying to connect!")
+        conn = mysql.connector.connect(
+            port=3306,
+            host=settings.mysql_host,
+            user=settings.mysql_user,
+            password=settings.mysql_pass,
+            database=settings.mysql_db,
+            connect_timeout=5
+        )
+    
+        if conn.is_connected():
+            print("Successfully connected to the database")
+            
+            cur = conn.cursor()
+            
+            
+            get_ls_state = '''
+                            SELECT new_file_name
+                            FROM data
+                            WHERE file_name = "state_for_ls"
+                           '''
+    
+            put_ls_state = '''
+                                INSERT INTO data (file_name, new_file_name)
+                                VALUES (%s, %s)
+                                ON DUPLICATE KEY update new_file_name = VALUES(new_file_name)
+                           '''
+
+            
+            print("Get state")
+            cur.execute(get_ls_state)
+
+            res = cur.fetchall()
+            state=int(res[0][0])
+            print(state)
+
+            fun = ls
+            fun.latest = state
+            files = fun(dirname, limit)
+
+            state = fun.latest
+
+
+            print("Push state")
+            cur.execute(put_ls_state, ('state_for_ls',str(state)))
+            conn.commit()
+            res = cur.fetchall()
+
+            return files
+
+
+
+
+    except Error as e:
+        print(f"Error while connecting to MySQL server: {e}")
+    
+    finally:
+        if 'connection' in locals() and conn.is_connected():
+            cur.close()
+            conn.close()
+            print("MySQL connection is closed")
+    
+
+
+
 
 
 def ls(dirname: str,
