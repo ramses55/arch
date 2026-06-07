@@ -41,7 +41,7 @@ def work(path, filename, pool):
     
         model = ultralytics.YOLO("./weights/best.pt")
         
-        #time.sleep(0.5)
+        time.sleep(0.3)
         print(local_name)
         output = model(local_name,
                     conf=0.1,
@@ -66,7 +66,7 @@ def work(path, filename, pool):
                         """
         
         #checks if OCR worked correctly
-        if not r.file_name or r.file_name[0] == 'OCR failed!' or 'index' in r.file_name[0] or len(r.names) == 0 :
+        if not r.file_name or 'OCR failed!' in r.file_name[0]  or 'index' in r.file_name[0] or len(r.names) == 0 :
             new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
             upload(buffer, new_path)
             mv(path, "failed/orig/" + filename)

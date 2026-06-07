@@ -213,12 +213,12 @@ def ocr(image: np.ndarray,
 
     except requests.exceptions.ConnectionError:
         print("OCR connection error!")
-        return None
+        return None, w1.status_code
     
     
     if w1.status_code != 200:
         print(f"OCR failed!: {w1.status_code}")
-        return None
+        return None, w1.status_code
 
 
 
@@ -228,6 +228,6 @@ def ocr(image: np.ndarray,
     text = list(set(text1))
 
 
-    return text
+    return text, w1.status_code
 
 

@@ -66,11 +66,11 @@ class result:
                 label_box=None
                 ) -> list:
         for label in self.label:
-            text  = ocr(label, apiKey, folderId)
+            text, code  = ocr(label, apiKey, folderId)
             if text is not None:
                 self.file_name.append(index1(text) + "_" + index2(text))
             else:
-                self.file_name.append("OCR failed!")
+                self.file_name.append(f"OCR failed! {code}")
                 
     def check_charred(self):
         if len(self.frag) > 0:
