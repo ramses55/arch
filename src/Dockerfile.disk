@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+
+RUN useradd  appuser
+
+
+RUN pip install --upgrade pip
+
+
+WORKDIR /app
+
+COPY ./disk/requirements.txt .
+
+RUN pip install -r requirements.txt
+
+
+
+
+COPY ./utils_disk/ ./utils_disk/
+COPY ./disk/ ./disk/
+
+
+
+CMD ["python", "-m", "disk.disk_backend"]

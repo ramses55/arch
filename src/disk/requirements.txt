@@ -1,0 +1,9 @@
+requests
+
+boto3
+
+datetime
+
+mysql-connector-python
+
+pydantic_settings
