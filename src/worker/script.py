@@ -5,6 +5,7 @@ from mysql.connector import pooling
 import uvicorn
 import os
 import traceback
+import time
 import json
 
 
@@ -24,9 +25,11 @@ async def basic(request: Request):
         path = body["path"]
         filename = body["filename"]
         try:
+            time.sleep(1)
             print(f"Started work on  {filename}")
             key=work(path, filename, pool)
             print(f"work returned: {key}")
+            print(f"Ended work on  {filename}")
             return Response(status_code=200)
 
         except Exception as e:

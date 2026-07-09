@@ -226,4 +226,8 @@ __marimo__/
 #Keys
 keys/
 
-
+#terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
