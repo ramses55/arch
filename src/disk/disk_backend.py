@@ -1,5 +1,7 @@
-from utils_disk import push_to_queue, ls_db, mkdir
+from utils_disk import push_to_queue, ls, mkdir, settings
+import requests
 
+worker_url = settings.worker_url
 
 #makes sure certain dirs do exist
 mkdir('ok')
@@ -10,8 +12,16 @@ mkdir('failed/marked')
 mkdir('failed/orig')
 
 
-files = ls_db("")
+files = ls("")
 push_to_queue(files)
 print(files)
-if files:
-    push_to_queue([['-','-']])
+#if files:
+#    push_to_queue([['-','-']])
+
+
+
+try:
+    requests.post(worker_url, timeout=0.1)
+except requests.exceptions.Timeout:
+    print("Triggered the worker instance")
+

@@ -13,8 +13,8 @@ from pathlib import Path
 from utils import crop_rect, orient_label, find_label
 from utils import ocr, index1, index2
 from utils.config import settings
-from .dirt import dirty
-from .char import charred
+#from .dirt import dirty
+#from .char import charred
 
 class result:
     def __init__(self, res, filename):
@@ -50,8 +50,8 @@ class result:
         self.size = np.sort(size, axis=-1)[:,::-1]
         
         self.names = [res.names[res.obb.cls[i.detach().item()].item()] for i in self.frag_ind]
-        self.dirty_model = dirty()
-        self.char_model = charred()
+        #self.dirty_model = dirty()
+        #self.char_model = charred()
         self.file_name = []
         self.charred = []
         self.dirty = []
@@ -72,27 +72,28 @@ class result:
             else:
                 self.file_name.append(f"OCR failed! {code}")
                 
-    def check_charred(self):
-        if len(self.frag) > 0:
-            self.charred = self.char_model(self.frag).detach().cpu().numpy()
+    #def check_charred(self):
+    #    if len(self.frag) > 0:
+    #        self.charred = self.char_model(self.frag).detach().cpu().numpy()
 
-    def check_dirty(self):
-        if len(self.frag) > 0:
-            self.dirty = self.dirty_model(self.frag).detach().cpu().numpy()
+    #def check_dirty(self):
+    #    if len(self.frag) > 0:
+    #        self.dirty = self.dirty_model(self.frag).detach().cpu().numpy()
         
 
     def all(self):
         self.use_ocr()
-        self.check_charred()
-        self.check_dirty()
+        #self.check_charred()
+        #self.check_dirty()
 
 
     def csv_res(self):
         size = [f'{s[0]}*{s[1]}' for s in self.size]
-        dr = {0: "нет загрязнения", 1: "загрязнение"}
-        ch = {0: "нет обугливания", 1: "частичное обугливание", 2: "обугливание"}
-        dirty = [dr[x] for x in self.dirty]
-        charred = [ch[x] for x in self.charred]
+        #dr = {0: "нет загрязнения", 1: "загрязнение"}
+        #ch = {0: "нет обугливания", 1: "частичное обугливание", 2: "обугливание"}
+        #dirty = [dr[x] for x in self.dirty]
+        #charred = [ch[x] for x in self.charred]
+
         #print(self.old_filename)
         #print(self.names)
         #print(size)
@@ -100,7 +101,9 @@ class result:
         #print(charred)
         #print(len(self.names))
         #print(self.file_name)
-        message = f"{self.old_filename}|{self.names}|{size}|{dirty}|{charred}|{len(self.names)}|{self.file_name}"
+
+        #message = f"{self.old_filename}|{self.names}|{size}|{dirty}|{charred}|{len(self.names)}|{self.file_name}"
+        message = f"{self.old_filename}|{self.names}|{size}|{len(self.names)}|{self.file_name}"
         return message
 
 
@@ -118,16 +121,17 @@ class result:
         font = ImageFont.truetype("DejaVuSans.ttf",30)
 
         sizes = [f'({s[0]}*{s[1]})' for s in self.size]
-        dr = {0: "нет загр", 1: "загр"}
-        ch = {0: "нет обугл", 1: "част обугл", 2: "обугл"}
-        dirty = [dr[x] for x in self.dirty]
-        charred = [ch[x] for x in self.charred]
-        for box,size,cl,d,c in zip(self.frag_box,sizes,self.names, dirty, charred):
+        #dr = {0: "нет загр", 1: "загр"}
+        #ch = {0: "нет обугл", 1: "част обугл", 2: "обугл"}
+        #dirty = [dr[x] for x in self.dirty]
+        #charred = [ch[x] for x in self.charred]
+        #for box,size,cl,d,c in zip(self.frag_box,sizes,self.names, dirty, charred):
+        for box,size,cl in zip(self.frag_box,sizes,self.names):
             #print("box:", box)
             box = box.squeeze()
             position = (box[:,0].min()-30, box[:,1].min()-30)
             #print("pos:",position)
-            text = cl + '-' + size + '-' + d + '-' + c
+            text = cl + '-' + size
             draw.text(position, text, font=font, fill=(0,0,0))
 
 

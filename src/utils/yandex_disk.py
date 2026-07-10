@@ -5,8 +5,8 @@ import json
 import csv
 from datetime import datetime
 from utils.config import settings
-import mysql.connector
-from mysql.connector import Error
+
+from botocore.exceptions import ClientError
 
 
 
@@ -23,6 +23,14 @@ sqs = boto3.client(
     aws_access_key_id=access_key,
     aws_secret_access_key=secret_key
 )
+
+
+
+
+s3 = boto3.client(service_name='s3',
+                         endpoint_url='https://storage.yandexcloud.net',
+                         aws_access_key_id=access_key,
+                         aws_secret_access_key=secret_key)
 
 
 def folder_path():
@@ -400,8 +408,64 @@ def ls_s(dirname: str,
 
     return files
 
+def make_csv(st):
 
-def make_csv(conn, suc=True):
+    merged = dict()
+    header = ["Исходное имя файла", "Тип объекта", "Размер (мм)", "Число объектов", "Путь к файлу"]
+
+    try:
+        s3.download_file("for-csv", f"{st}-r.csv", f"{st}-r.csv")
+
+        #it is important that older file goes first
+        with open(f"{st}-r.csv", "r") as f:
+            old = csv.reader(f, delimiter = ',')
+
+            try:
+
+                next(old)
+
+                for row in old:
+                    merged[row[0]] = row
+            except StopIteration:
+                #print("Got stop iter old")
+                pass
+
+    except ClientError:
+        pass
+
+
+    with open(f"{st}.csv", "r") as f:
+        new = csv.reader(f, delimiter = '|')
+
+        try:
+
+            next(new)
+
+            for row in new:
+                #will update already present rows with new values
+                merged[row[0]] = row
+        except StopIteration:
+            #print("Got stop iter new")
+            pass
+
+    data = [merged[k] for k in merged]
+    data = [header] + data
+    with open(f"{st}-res.csv", "w") as f:
+        writer = csv.writer(f, delimiter = ",")
+        writer.writerows(data)
+
+    s3.upload_file(f"{st}-res.csv", "for-csv", f"{st}-r.csv")
+
+
+    with open(f"{st}-res.csv", "rb") as f:
+           buffer = f.read()
+
+    path = f"disk:/Приложения/arch_fragments/{st}/{st}.csv"
+    code = upload(buffer, path)
+
+    return code
+
+def make_csv_db(conn, suc=True):
 
     if suc:
         files = ls_s('ok/orig')
