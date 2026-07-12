@@ -61,7 +61,6 @@ def fun():
             filename = body_info["filename"]
             receipt_handle = message['ReceiptHandle']
             try:
-                time.sleep(0.3)
                 print(f"Started work on  {filename}")
                 key=work(path, filename, ok, failed)
                 print(f"work returned: {key}")
