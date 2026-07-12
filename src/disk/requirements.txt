@@ -4,6 +4,6 @@ boto3
 
 datetime
 
-mysql-connector-python
+#mysql-connector-python
 
 pydantic_settings

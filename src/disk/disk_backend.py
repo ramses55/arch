@@ -1,5 +1,7 @@
+import sys
+import json
+
 from utils_disk import push_to_queue, ls, mkdir, settings
-import requests
 
 worker_url = settings.worker_url
 
@@ -11,17 +13,9 @@ mkdir('ok/marked')
 mkdir('failed/marked')
 mkdir('failed/orig')
 
-
 files = ls("")
 push_to_queue(files)
-print(files)
-#if files:
-#    push_to_queue([['-','-']])
+print("num of files:", len(files))
 
-
-
-try:
-    requests.post(worker_url, timeout=0.1)
-except requests.exceptions.Timeout:
-    print("Triggered the worker instance")
-
+with open('/tmp/output.json', "w") as f:
+    json.dump({'result': 'ok'}, f)

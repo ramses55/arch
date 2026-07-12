@@ -5,8 +5,8 @@ import json
 import csv
 from datetime import datetime
 from utils_disk.config import settings
-import mysql.connector
-from mysql.connector import Error
+#import mysql.connector
+#from mysql.connector import Error
 
 
 

@@ -1,0 +1,22 @@
+yawl: "0.1"
+
+start: run_disk
+
+
+steps:
+  run_disk:
+    containerCall:
+      containerId: bbadrojp4vt4s2cuooa3
+      output: '{}'
+      next: worker
+
+  worker:
+    containerCall:
+      containerId: bba0mj8jecpvlh9gd894
+      output: '{}'
+      retryPolicy:
+        errorList:
+          - CONTAINER_CALL_502
+        retryCount: 100
+
+

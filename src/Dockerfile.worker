@@ -48,6 +48,6 @@ COPY ./utils/ ./utils/
 COPY ./worker/ ./worker/
 COPY ./weights/ ./weights/
 
-RUN python -c "import torchvision.models as models; models.resnet18(weights='DEFAULT')"
+#RUN python -c "import torchvision.models as models; models.resnet18(weights='DEFAULT')"
 
 CMD ["python", "-m", "worker.script"]
