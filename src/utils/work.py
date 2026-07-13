@@ -53,7 +53,7 @@ def work(path, filename, file_ok, file_failed):
         
         
         #checks if OCR worked correctly
-        if not r.file_name or 'OCR failed!' in r.file_name[0]  or 'index' in r.file_name[0] or len(r.names) == 0:
+        if not r.file_name or 'OCR failed!' in r.file_name[0]  or 'ind' in r.file_name[0] or len(r.names) == 0:
             new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
             upload(buffer, new_path)
             mv(path, "failed/orig/" + filename)

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запуск Воркфлоу без CORS</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        button {
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background-color: #0070f3;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0, 112, 243, 0.3);
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background-color: #0051cb;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Скрытый фрейм, куда форма отправит ответ от Yandex Cloud -->
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="onFormSubmit()"></iframe>
+
+    <!-- 
+      HTML-форма для обхода CORS. 
+      ЗАМЕНИТЕ 'ВСТАВЬТЕ_СЮДА_ВАШУ_ССЫЛКУ' на ваш реальный URL из Yandex Cloud 
+    -->
+    <form action="https://serverless-workflows.api.cloud.yandex.net/workflows/v1/execution/dfqgbq5tu74fcd0lk3qk/start" method="POST" target="hidden_iframe" id="workflowForm">
+        <button type="submit" id="runBtn">Запустить процесс</button>
+    </form>
+    
+    <div id="status">Нажмите кнопку для запуска</div>
+
+    <script>
+        let isSubmitting = false;
+
+        // Перехватываем отправку формы для визуального эффекта загрузки
+        document.getElementById('workflowForm').onsubmit = function() {
+            isSubmitting = true;
+            document.getElementById('runBtn').disabled = true;
+            document.getElementById('status').innerText = 'Запрос отправлен в облако...';
+        };
+
+        // Эта функция срабатывает, когда iframe загружает ответ от сервера
+        function onFormSubmit() {
+            // Игнорируем первый запуск функции при инициализации страницы
+            if (!isSubmitting) return; 
+            
+            document.getElementById('status').style.color = '#0070f3';
+            document.getElementById('status').innerText = 'Запрос успешно ушел!';
+            document.getElementById('runBtn').disabled = false;
+            isSubmitting = false;
+        }
+    </script>
+
+</body>
+</html>
