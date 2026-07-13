@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 from utils import crop_rect, orient_label, find_label
-from utils import ocr, index1, index2
+from utils import ocr, index1, index2, fix_cyr
 from utils.config import settings
 #from .dirt import dirty
 #from .char import charred
@@ -68,7 +68,7 @@ class result:
         for label in self.label:
             text, code  = ocr(label, apiKey, folderId)
             if text is not None:
-                self.file_name.append(index1(text) + "_" + index2(text))
+                self.file_name.append(fix_cyr(index1(text) + "_" + index2(text)))
             else:
                 self.file_name.append(f"OCR failed! {code}")
                 

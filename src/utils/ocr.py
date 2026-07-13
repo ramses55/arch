@@ -15,7 +15,17 @@ def extract(vert):
         res[i] = a
     return res 
     
-
+def fix_cyr(text: str) -> str:
+    tr = str.maketrans({
+        'A': 'А', 'B': 'В', 'E': 'Е', 'K': 'К', 'M': 'М', 
+        'H': 'Н', 'O': 'О', 'P': 'Р', 'C': 'С', 'T': 'Т', 
+        'X': 'Х', 'Y': 'У',
+        
+        'a': 'а', 'e': 'е', 'k': 'к', 'o': 'о', 'p': 'р', 
+        'c': 'с', 'x': 'х', 'y': 'у'
+    })
+    
+    return text.translate(tr)
 
 
 def inside(box, box1):
