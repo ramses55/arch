@@ -17,6 +17,6 @@ steps:
       retryPolicy:
         errorList:
           - CONTAINER_CALL_502
+          - CONTAINER_CALL_504
         retryCount: 100
-
 

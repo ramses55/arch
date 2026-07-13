@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     folder_id: str
     api_key: str
     worker_url: str
+    img_limit: int
+    res_limit: int
 
     model_config = SettingsConfigDict(env_file=".env")
 

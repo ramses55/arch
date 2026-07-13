@@ -8,6 +8,7 @@ from utils import work
 
 import sys
 
+
 def fun():
     oauth_token = settings.oauth_token
     access_key = settings.access_key_id
@@ -77,13 +78,13 @@ def fun():
         if (res_counter > res_limit or img_counter > img_limit):
             ok.close()
             failed.close()
-            path = '-'
-            filename = '-'
-            print(f"Started work on  {filename}")
-            key=work(path, filename, None, None)
-            print(f"work returned: {key}")
-            print(f"Ended work on  {filename}")
-            work("-", "-", None, None)
+            #path = '-'
+            #filename = '-'
+            #print(f"Started work on  {filename}")
+            #key=work(path, filename, None, None)
+            #print(f"work returned: {key}")
+            #print(f"Ended work on  {filename}")
+            #work("-", "-", None, None)
             break
     
     
@@ -107,4 +108,3 @@ if __name__ == '__main__':
         sys.exit(10)
     else:
         sys.exit(0)
-

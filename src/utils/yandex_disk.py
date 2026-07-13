@@ -185,7 +185,7 @@ def ls(dirname: str,
     while (len(items) != 0):
         #print(f'latest--{ls.latest}')
         #print(len(items))
-        time.sleep(0.1) 
+        #time.sleep(0.1) 
         params = {
                 'path':  f'disk:/Приложения/arch_fragments/{dirname}',
                 'fields':
@@ -382,7 +382,7 @@ def ls_s(dirname: str,
     while (len(items) != 0):
         #print(f'latest--{ls.latest}')
         #print(len(items))
-        time.sleep(0.1) 
+        #time.sleep(0.1) 
         params = {
                 'path':  f'disk:/Приложения/arch_fragments/{dirname}',
                 'fields':
