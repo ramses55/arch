@@ -37,7 +37,7 @@ def work(path, filename, file_ok, file_failed):
     
         model = ultralytics.YOLO("./weights/best.pt")
         
-        print(local_name)
+        #print(local_name)
         output = model(local_name,
                     conf=0.25,
                     save=False,

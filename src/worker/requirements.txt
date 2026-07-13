@@ -16,3 +16,6 @@ mysql-connector-python
 
 onnx
 onnxruntime
+
+
+openpyxl

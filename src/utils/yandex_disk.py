@@ -5,6 +5,7 @@ import json
 import csv
 from datetime import datetime
 from utils.config import settings
+import openpyxl
 
 from botocore.exceptions import ClientError
 
@@ -461,6 +462,21 @@ def make_csv(st):
            buffer = f.read()
 
     path = f"disk:/Приложения/arch_fragments/{st}/{st}.csv"
+    code = upload(buffer, path)
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+
+    for row in data:
+        ws.append(row)
+
+    wb.save(f"{st}.xlsx")
+
+
+    with open(f"{st}.xlsx", "rb") as f:
+           buffer = f.read()
+
+    path = f"disk:/Приложения/arch_fragments/{st}/{st}.xlsx"
     code = upload(buffer, path)
 
     return code

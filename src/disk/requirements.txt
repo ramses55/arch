@@ -7,3 +7,6 @@ datetime
 #mysql-connector-python
 
 pydantic_settings
+
+
+openpyxl
