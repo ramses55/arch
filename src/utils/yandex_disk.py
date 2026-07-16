@@ -11,28 +11,27 @@ from botocore.exceptions import ClientError
 
 
 
-
 oauth_token = settings.oauth_token
 access_key = settings.access_key_id
 secret_key = settings.access_key
 QUEUE_URL = settings.queue_url
 
-sqs = boto3.client(
-    "sqs",
-    endpoint_url="https://message-queue.api.cloud.yandex.net",
-    region_name="ru-central1",
-    aws_access_key_id=access_key,
-    aws_secret_access_key=secret_key
-)
-
-
-
-
-s3 = boto3.client(service_name='s3',
-                         endpoint_url='https://storage.yandexcloud.net',
-                         aws_access_key_id=access_key,
-                         aws_secret_access_key=secret_key)
-
+#sqs = boto3.client(
+#    "sqs",
+#    endpoint_url="https://message-queue.api.cloud.yandex.net",
+#    region_name="ru-central1",
+#    aws_access_key_id=access_key,
+#    aws_secret_access_key=secret_key
+#)
+#
+#
+#
+#
+#s3 = boto3.client(service_name='s3',
+#                         endpoint_url='https://storage.yandexcloud.net',
+#                         aws_access_key_id=access_key,
+#                         aws_secret_access_key=secret_key)
+#
 
 def folder_path():
     url = "https://cloud-api.yandex.net/v1/disk/resources?path=app:/"
@@ -238,13 +237,47 @@ def push_to_queue(files: list):
         )
 
 
+def download_b(path: str, session):
+    '''
+        This function downloads the file and returns its byte representation
 
-def download(path: str):
+        Args:
+            path (str): path of a file to be downloaded
+        
+        Returns:
+            exit_codes (tuple): (exit_code1, exit_code2)
+    '''
+
+    url = "https://cloud-api.yandex.net/v1/disk/resources/download"
+    headers = {"Authorization": f'OAuth {oauth_token}'}
+    params = {'path': f'{path}'}
+
+    r = session.get(url = url,
+                     headers = headers,
+                     params = params
+                     )
+
+
+    if r.status_code == 200:
+        download_url = r.json()['href']
+        r1 = session.get(url = download_url)
+        if r1.status_code == 200:
+            return  r1.content
+        else:
+            return r1.status_code
+    else:
+        return r.status_code
+
+
+
+
+def download(path: str, local_name: str):
     '''
         This function downloads the file
 
         Args:
             path (str): path of a file to be downloaded
+            local_name (str): local_name of downloaded file
         
         Returns:
             exit_codes (tuple): (exit_code1, exit_code2)
@@ -265,7 +298,7 @@ def download(path: str):
         download_url = r.json()['href']
         r1 = requests.get(url = download_url)
         if r1.status_code == 200:
-            with open(f"image.{ext}", "wb") as f:
+            with open(f"{local_name}.{ext}", "wb") as f:
                 f.write(r1.content)
         else:
             return r1.status_code
@@ -278,7 +311,8 @@ def download(path: str):
 
 
 def upload(buffer,
-           path: str):
+           path: str,
+           session):
     '''
         This function uploads the file
 
@@ -298,7 +332,7 @@ def upload(buffer,
               'overwrite': 'true'
               }
 
-    r = requests.get(url = url,
+    r = session.get(url = url,
                      headers = headers,
                      params = params
                      )
@@ -306,7 +340,7 @@ def upload(buffer,
 
     if r.status_code == 200:
         upload_url = r.json()['href']
-        r1 = requests.put(url = upload_url, data=buffer)
+        r1 = session.put(url = upload_url, data=buffer)
         return r1.status_code
     else:
         return r.status_code
@@ -409,7 +443,7 @@ def ls_s(dirname: str,
 
     return files
 
-def make_csv(st):
+def make_csv(st, s3):
 
     merged = dict()
     header = ["Исходное имя файла", "Тип объекта", "Размер (мм)", "Число объектов", "Путь к файлу"]
