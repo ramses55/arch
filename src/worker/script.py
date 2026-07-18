@@ -23,6 +23,7 @@ import ultralytics
 
 
 import requests
+import logging
 
 
 oauth_token = settings.oauth_token
@@ -39,6 +40,9 @@ sqs = boto3.client(
     aws_secret_access_key=secret_key
 )
 
+max_w=6
+
+logging.basicConfig(filename=f'log{max_w}', level=logging.INFO)
 
 thread_local = threading.local()
 
@@ -48,14 +52,11 @@ q_out = queue.Queue()
 model = ultralytics.YOLO("./weights/best.pt")
 
 session = requests.Session()
-adapter = requests.adapters.HTTPAdapter(pool_connections=10, pool_maxsize=10)
+adapter = requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=30)
 session.mount("https://", adapter)
 
 
 def fun():
-    
-    #img_counter = 0
-    res_counter = 0
     
     
     #img_limit = settings.img_limit
@@ -70,14 +71,15 @@ def fun():
     ok.write(h)
     failed.write(h)
     
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        while(True):
-            res_counter += 1
+    num = 0
+
+    with ThreadPoolExecutor(max_workers=max_w) as executor:
+        while(num < 200):
             response = sqs.receive_message(
                     QueueUrl=QUEUE_URL,
                     MaxNumberOfMessages=10,
                     VisibilityTimeout=60,
-                    WaitTimeSeconds=1,
+                    WaitTimeSeconds=0,
                     ReceiveRequestAttemptId='string'
                 )
         
@@ -87,28 +89,34 @@ def fun():
             messages = [ (a["path"], a["filename"], b) for a,b in m1]
         
         
+            num += len(messages)
             for message in messages:
                 executor.submit(download_part, message, q_in, session)
 
-            print("queue_in:", q_in.qsize())
-            print("queue_out:", q_out.qsize())
-            while True:
-                print("queue_in:", q_in.qsize())
-                try:
-                    res = model_part(q_in, q_out, model, ok, failed)
+            try:
+                #here it will sleep and wait for task
+                 res = model_part(q_in, q_out, model, ok, failed,
+                                  session, wait=True)
+                 executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
 
-                    if res:
+            except Exception as e:
+                 print(f"An error occurred: {e}")
+                 traceback.print_exc()
+        
+        
+        while True:
+                try:
+                    res = model_part(q_in, q_out, model, ok, failed, session, wait=False)
+
+                    if res == 1:
                         break
 
                     executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
 
+
+
                 except Exception as e:
                     print(f"An error occurred: {e}")
-                    traceback.print_exc()
-        
-        
-            if res_counter > 10:
-                break
 
         ok.close()
         failed.close()

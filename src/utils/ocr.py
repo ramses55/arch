@@ -164,6 +164,7 @@ def date(text: list) -> str:
 def ocr(image: np.ndarray,
         apiKey: str,
         folderId: str,
+        session,
         packet_box=None,
         label_box=None
         ) -> list:
@@ -216,7 +217,7 @@ def ocr(image: np.ndarray,
               "x-data-logging-enabled": "true"}
       
     try:
-        w1 = requests.post(url=url,
+        w1 = session.post(url=url,
                            headers=headers,
                            data=json.dumps(data1),
                            timeout=10)

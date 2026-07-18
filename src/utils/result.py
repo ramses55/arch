@@ -60,13 +60,14 @@ class result:
 
     
     def use_ocr(self,
+                session,
                 apiKey = settings.api_key,
                 folderId = settings.folder_id,
                 packet_box=None,
                 label_box=None
                 ) -> list:
         for label in self.label:
-            text, code  = ocr(label, apiKey, folderId)
+            text, code  = ocr(label, apiKey, folderId, session)
             if text is not None:
                 self.file_name.append(fix_cyr(index1(text) + "_" + index2(text)))
             else:
@@ -81,8 +82,8 @@ class result:
     #        self.dirty = self.dirty_model(self.frag).detach().cpu().numpy()
         
 
-    def all(self):
-        self.use_ocr()
+    def all(self, session):
+        self.use_ocr(session=session)
         #self.check_charred()
         #self.check_dirty()
 

@@ -9,8 +9,12 @@ import io
 from utils import ls, mv, download, upload, make_csv, download_b
 import queue
 
+import time
+import logging
 
 
+
+logging.basicConfig(level=logging.INFO)
 
 
 def work(path, filename, file_ok, file_failed, ln):
@@ -79,6 +83,8 @@ def work(path, filename, file_ok, file_failed, ln):
 
 
 def download_part(message, q, session):
+    t0 = time.perf_counter()
+    cpu0 = time.thread_time()
     path, filename, receipt_handle = message
 
     res = download_b(path, session)
@@ -95,11 +101,21 @@ def download_part(message, q, session):
         q.put(queue_el)
 
 
+    dt = time.perf_counter() - t0;
+    dcpu = time.thread_time() - cpu0;
+    logging.info("Download %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
 
-def model_part(queue_in, queue_out, model, file_ok, file_failed):
+
+
+def model_part(queue_in, queue_out, model, file_ok, file_failed, session, wait):
+    t0 = time.perf_counter()
+    cpu0 = time.thread_time()
 
     try:
-        path, filename, receipt_handle, image = queue_in.get(timeout=0.5)
+        if wait:
+            path, filename, receipt_handle, image = queue_in.get()
+        else:
+            path, filename, receipt_handle, image = queue_in.get_nowait()
 
     except queue.Empty:
         return 1
@@ -114,7 +130,12 @@ def model_part(queue_in, queue_out, model, file_ok, file_failed):
                 verbose=False)
     
     r = result(output[0], filename)
-    r.all()
+    t01 = time.perf_counter()
+    cpu01 = time.thread_time()
+    r.all(session)
+    dt = time.perf_counter() - t01;
+    dcpu = time.thread_time() - cpu01;
+    logging.info("OCR %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
     m = r.csv_res()
     buffer = r.draw()
     ext = filename.split('.')[-1]
@@ -135,13 +156,25 @@ def model_part(queue_in, queue_out, model, file_ok, file_failed):
     queue_el = (new_path, receipt_handle, buffer)
     queue_out.put(queue_el)
     queue_in.task_done()
+
+
+    dt = time.perf_counter() - t0;
+    dcpu = time.thread_time() - cpu0;
+    logging.info("Image process %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
     return 0
 
 
 def upload_part(q,sqs, queue_url, session):
+    t0 = time.perf_counter()
+    cpu0 = time.thread_time()
+
     new_path, receipt_handle, buffer = q.get()
     print("upload code:", upload(buffer, new_path, session))
     sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
     q.task_done()
+
+    dt = time.perf_counter() - t0;
+    dcpu = time.thread_time() - cpu0;
+    logging.info("Image upload %s took wall=%.3f s cpu=%.3f s", new_path, dt, dcpu)
         
