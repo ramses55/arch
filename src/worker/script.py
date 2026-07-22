@@ -27,8 +27,8 @@ import logging
 
 
 oauth_token = settings.oauth_token
-access_key = settings.access_key_id
-secret_key = settings.access_key
+access_key_id = settings.access_key_id
+access_key = settings.access_key
 QUEUE_URL = settings.queue_url
 worker_url = settings.worker_url
 
@@ -36,8 +36,8 @@ sqs = boto3.client(
     "sqs",
     endpoint_url="https://message-queue.api.cloud.yandex.net",
     region_name="ru-central1",
-    aws_access_key_id=access_key,
-    aws_secret_access_key=secret_key
+    aws_access_key_id=access_key_id,
+    aws_secret_access_key=access_key
 )
 
 max_w=6
@@ -49,10 +49,10 @@ thread_local = threading.local()
 q_in = queue.Queue()
 q_out = queue.Queue()
 
-model = ultralytics.YOLO("./weights/best.pt")
+model = ultralytics.YOLO("./weights/best.onnx", task='obb')
 
 session = requests.Session()
-adapter = requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=30)
+adapter = requests.adapters.HTTPAdapter(pool_connections=40, pool_maxsize=40)
 session.mount("https://", adapter)
 
 
