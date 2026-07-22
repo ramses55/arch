@@ -1,21 +1,24 @@
-import boto3
+#import boto3
 import os
-from datetime import datetime
 import requests
 import json
+import aioboto3
+import asyncio
+
+
+from datetime import datetime
+from itertools import islice
+from aiolimiter import AsyncLimiter
+
 
 oauth_token = os.getenv("oauth_token")
 queue_url = os.getenv("queue_url")
-
-from itertools import islice
-
-
-
 access_key_id = os.getenv('access_key_id')
 access_key = os.getenv('access_key')
-queue_url = os.getenv('queue_url')
 
 
+
+limiter = AsyncLimiter(100, 1)
 
 #sqs = boto3.client(
 #    "sqs",
@@ -26,8 +29,6 @@ queue_url = os.getenv('queue_url')
 #)
 
 
-import aioboto3
-import asyncio
 
 
 def chunks(iterable, size):
@@ -36,13 +37,14 @@ def chunks(iterable, size):
         yield batch
 
 async def send_batch(client, batch):
-    await client.send_message_batch(
-        QueueUrl=queue_url,
-        Entries=[
-            {"Id": str(i), "MessageBody":  json.dumps(msg)}
-            for i, msg in enumerate(batch)
-        ]
-    )
+    async with limiter:
+        await client.send_message_batch(
+            QueueUrl=queue_url,
+            Entries=[
+                {"Id": str(i), "MessageBody":  json.dumps(msg)}
+                for i, msg in enumerate(batch)
+            ]
+        )
 
 async def main():
     session = aioboto3.Session()
@@ -81,7 +83,6 @@ def mkdir(dirname: str):
     '''
     url = "https://cloud-api.yandex.net/v1/disk/resources"
     headers = {"Authorization": f'OAuth {oauth_token}'}
-    #params = { 'path': , 'fields': }
     params = { 'path': f'disk:/Приложения/arch_fragments/{dirname}'}
 
     r = requests.put(url = url,
