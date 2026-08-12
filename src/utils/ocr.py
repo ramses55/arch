@@ -228,7 +228,7 @@ def ocr(image: np.ndarray,
     
     
     if w1.status_code != 200:
-        print(f"OCR failed!: {w1.status_code}")
+        print(f"OCR failed!!!: {w1.status_code}")
         return None, w1.status_code
 
 

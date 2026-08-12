@@ -143,7 +143,7 @@ def model_part(queue_in, queue_out, model, file_ok, file_failed, session, wait):
         
         
     #checks if OCR worked correctly
-    if not r.file_name or '! 429' in r.file_name[0]  or 'ind' in r.file_name[0] or len(r.names) == 0:
+    if not r.file_name or 'd!!!:' in r.file_name[0]  or 'ind' in r.file_name[0] or len(r.names) == 0:
         new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
         mv(path, "failed/orig/" + filename)
         file_failed.write(m + '\n')
