@@ -31,6 +31,7 @@ access_key_id = settings.access_key_id
 access_key = settings.access_key
 QUEUE_URL = settings.queue_url
 worker_url = settings.worker_url
+img_limit = settings.img_limit
 
 sqs = boto3.client(
     "sqs",
@@ -58,7 +59,6 @@ session.mount("https://", adapter)
 
 def fun():
     
-    
     #img_limit = settings.img_limit
     #res_limit = settings.res_limit
     
@@ -72,9 +72,10 @@ def fun():
     failed.write(h)
     
     num = 0
+    i = 0 #number of times while will iterate max
 
     with ThreadPoolExecutor(max_workers=max_w) as executor:
-        while(num < 200):
+        while(num < img_limit and i < 10):
             response = sqs.receive_message(
                     QueueUrl=QUEUE_URL,
                     MaxNumberOfMessages=10,
@@ -86,10 +87,14 @@ def fun():
             
             messages = response.get("Messages", [])
             m1 = [ (json.loads(m["Body"]), m["ReceiptHandle"]) for m in messages]
-            messages = [ (a["path"], a["filename"], b) for a,b in m1]
+            messages = [ (a[0], a[1], b) for a,b in m1]
         
         
             num += len(messages)
+            if (len(messages) == 0):
+                i+=1
+                continue
+
             for message in messages:
                 executor.submit(download_part, message, q_in, session)
 
@@ -104,11 +109,13 @@ def fun():
                  traceback.print_exc()
         
         
-        while True:
+        while q_in.qsize() != 0:
                 try:
                     res = model_part(q_in, q_out, model, ok, failed, session, wait=False)
 
-                    if res == 1:
+                    print("q_in size:", q_in.qsize())
+
+                    if res == 1 or q_in.qsize() == 0:
                         break
 
                     executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
@@ -122,18 +129,9 @@ def fun():
         failed.close()
         
     
-    #if img_counter > img_limit:
-    #    print("Should call next instance!", flush=True)
-    #    return 0
-    #else:
-    #    print("Should finish!", flush=True)
-    #    return 1
 
 
-if __name__ == '__main__':
+for i in range(3):
+    print(f"Started fun(): {i}")
     fun()
-    #if res == 0:
-    #    sys.exit(10)
-    #else:
-    #    sys.exit(0)
 

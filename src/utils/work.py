@@ -61,7 +61,7 @@ def work(path, filename, file_ok, file_failed, ln):
         
         
         #checks if OCR worked correctly
-        if not r.file_name or 'OCR failed!' in r.file_name[0]  or 'ind' in r.file_name[0] or len(r.names) == 0:
+        if not r.file_name or '! 429' in r.file_name[0]  or 'ind' in r.file_name[0] or len(r.names) == 0:
             new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
             upload(buffer, new_path)
             mv(path, "failed/orig/" + filename)
@@ -103,7 +103,7 @@ def download_part(message, q, session):
 
     dt = time.perf_counter() - t0;
     dcpu = time.thread_time() - cpu0;
-    logging.info("Download %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+    #logging.info("Download %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
 
 
 
@@ -135,7 +135,7 @@ def model_part(queue_in, queue_out, model, file_ok, file_failed, session, wait):
     r.all(session)
     dt = time.perf_counter() - t01;
     dcpu = time.thread_time() - cpu01;
-    logging.info("OCR %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+    #logging.info("OCR %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
     m = r.csv_res()
     buffer = r.draw()
     ext = filename.split('.')[-1]
@@ -143,14 +143,15 @@ def model_part(queue_in, queue_out, model, file_ok, file_failed, session, wait):
         
         
     #checks if OCR worked correctly
-    if not r.file_name or 'OCR failed!' in r.file_name[0]  or 'ind' in r.file_name[0] or len(r.names) == 0:
+    if not r.file_name or '! 429' in r.file_name[0]  or 'ind' in r.file_name[0] or len(r.names) == 0:
         new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
         mv(path, "failed/orig/" + filename)
         file_failed.write(m + '\n')
     else:
         new_file_name =  r.file_name[0] + '.' + ext
         new_path ="disk:/Приложения/arch_fragments/ok/marked/" + new_file_name
-        print("mv code:", mv(path, "ok/orig/" + new_file_name))
+        #print("mv code:", mv(path, "ok/orig/" + new_file_name))
+        mv(path, "ok/orig/" + new_file_name)
         file_ok.write(m + '\n')
 
     queue_el = (new_path, receipt_handle, buffer)
@@ -160,7 +161,7 @@ def model_part(queue_in, queue_out, model, file_ok, file_failed, session, wait):
 
     dt = time.perf_counter() - t0;
     dcpu = time.thread_time() - cpu0;
-    logging.info("Image process %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+    #logging.info("Image process %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
     return 0
 
 
@@ -169,12 +170,12 @@ def upload_part(q,sqs, queue_url, session):
     cpu0 = time.thread_time()
 
     new_path, receipt_handle, buffer = q.get()
-    print("upload code:", upload(buffer, new_path, session))
+    upload(buffer, new_path, session)
     sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
     q.task_done()
 
     dt = time.perf_counter() - t0;
     dcpu = time.thread_time() - cpu0;
-    logging.info("Image upload %s took wall=%.3f s cpu=%.3f s", new_path, dt, dcpu)
+    #logging.info("Image upload %s took wall=%.3f s cpu=%.3f s", new_path, dt, dcpu)
         
