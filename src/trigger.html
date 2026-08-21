@@ -82,8 +82,8 @@
         //};
         
         async function startWorkflow() {
-		const url_fun =  "https://functions.yandexcloud.net/d4e3klir6bn1f1kbifm1?integration=raw"
-		const url_work =  "https://serverless-workflows.api.cloud.yandex.net/workflows/v1/execution/dfqgbq5tu74fcd0lk3qk/start"
+		const url_fun =  "https://d5do6kp6a7taqfurhoh2.g4vq2kuy.apigw.yandexcloud.net/queue"
+		const url_work =  "https://d5do6kp6a7taqfurhoh2.g4vq2kuy.apigw.yandexcloud.net/workflow"
 
 		const status = document.getElementById('status');
 		const btn = document.getElementById('runBtn');
@@ -91,6 +91,7 @@
 
 		btn.disabled = true;
     		btn.innerText = "Подождите (5с)...";
+		status.innerText = "Попытка запуска процесса";
 
 		setTimeout(() => {
 		        btn.disabled = false;
@@ -99,33 +100,33 @@
 
 		try {
 			const response_fun = await fetch(url_fun, {
-				method: 'POST'
+				method: 'GET'
 			});
 
 			if (response_fun.ok){
 				const data = await response_fun.json();
-				const queue_size = data.sum
+				const queue_size = data.num_mes
 				console.log("Success! Workflow started:", queue_size);
 				//alert(`Функция успешно запущена! ${queue_size} в очереди`);
-				let fun_text = `${queue_size} изображений в очереди!`;
+				let fun_text = `Изображений в очереди: ${queue_size}`;
 				let work_text = "lol";
 
 				if (queue_size == 0){
 					const response_work = await fetch(url_work, {
-						method: 'POST'
+						method: 'GET'
 					});
 					console.log("Workflow response:", response_work);
 
 					if (response_work.ok){
-						alert("Workflow запущен");
-						work_text = "Workflow запущен!";
+						//alert("Процесс запущен");
+						work_text = "Процесс запущен!";
 					} else {
             					alert("Ошибка при запуске workflow.");
 					}
 
 				} else{
-					alert("Очередь не пуста! Workflow не запущен!");
-					work_text = "Новый Workflow не запущен!";
+					//alert("Очередь не пуста! Workflow не запущен!");
+					work_text = "Новый процесс не запущен!";
 				}
 
 

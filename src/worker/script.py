@@ -113,6 +113,7 @@ def fun():
         while q_in.qsize() != 0:
                 try:
                     res = model_part(q_in, q_out, model, ok, failed, session, wait=False)
+                    print("res", res)
 
                     print("q_in size:", q_in.qsize())
 
