@@ -5,7 +5,7 @@ import json
 
 from utils import settings
 from utils import work, download_b, mv
-from utils import upload_part, model_part, download_part
+from utils import upload_part, model_part, download_part, make_csv
 
 import sys
 
@@ -40,6 +40,14 @@ sqs = boto3.client(
     aws_access_key_id=access_key_id,
     aws_secret_access_key=access_key
 )
+
+
+s3 = boto3.client(service_name='s3',
+                         endpoint_url='https://storage.yandexcloud.net',
+                         aws_access_key_id=access_key_id,
+                         aws_secret_access_key=access_key)
+
+
 
 max_w=6
 
@@ -79,7 +87,7 @@ def fun():
             response = sqs.receive_message(
                     QueueUrl=QUEUE_URL,
                     MaxNumberOfMessages=10,
-                    VisibilityTimeout=60,
+                    VisibilityTimeout=20,
                     WaitTimeSeconds=0,
                     ReceiveRequestAttemptId='string'
                 )
@@ -102,7 +110,8 @@ def fun():
                 #here it will sleep and wait for task
                  res = model_part(q_in, q_out, model, ok, failed,
                                   session, wait=True)
-                 executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
+                 if res == 0:
+                    executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
 
             except Exception as e:
                  print(f"An error occurred: {e}")
@@ -115,10 +124,13 @@ def fun():
 
                     print("q_in size:", q_in.qsize())
 
+                    if res == 0:
+                        executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
+
+
                     if res == 1 or q_in.qsize() == 0:
                         break
 
-                    executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
 
 
 
@@ -127,6 +139,7 @@ def fun():
 
         ok.close()
         failed.close()
+        executor.shutdown(wait=True)
         
     
 
@@ -135,3 +148,6 @@ for i in range(3):
     print(f"Started fun(): {i}")
     fun()
 
+make_csv("ok", s3, session)
+make_csv("failed", s3, session)
+print("Made CSVs");

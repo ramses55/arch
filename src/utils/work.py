@@ -90,8 +90,8 @@ def download_part(message, q, session):
     res = download_b(path, session)
 
     if type(res) is int:
-        print(f"Error download: {res}")
-        mv(path, "failed/orig/")
+        print(f"Error download: {res}. {path}")
+        #mv(path, "failed/orig/")
         
 
     else:
@@ -113,7 +113,7 @@ def model_part(queue_in, queue_out, model, file_ok, file_failed, session, wait):
 
     try:
         if wait:
-            path, filename, receipt_handle, image = queue_in.get()
+            path, filename, receipt_handle, image = queue_in.get(timeout=5)
         else:
             path, filename, receipt_handle, image = queue_in.get_nowait()
 
@@ -122,7 +122,7 @@ def model_part(queue_in, queue_out, model, file_ok, file_failed, session, wait):
 
             
 
-    print(filename)
+    #print(filename)
     output = model(image,
                 conf=0.25,
                 save=False,
@@ -157,7 +157,7 @@ def model_part(queue_in, queue_out, model, file_ok, file_failed, session, wait):
     queue_el = (new_path, receipt_handle, buffer)
     queue_out.put(queue_el)
     queue_in.task_done()
-
+    #executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
 
     dt = time.perf_counter() - t0;
     dcpu = time.thread_time() - cpu0;
@@ -170,7 +170,10 @@ def upload_part(q,sqs, queue_url, session):
     cpu0 = time.thread_time()
 
     new_path, receipt_handle, buffer = q.get()
-    upload(buffer, new_path, session)
+    r=upload(buffer, new_path, session)
+    if (r // 100 != 2):
+        print("Upload status:", r, new_path)
+
     sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
 
     q.task_done()

@@ -443,7 +443,7 @@ def ls_s(dirname: str,
 
     return files
 
-def make_csv(st, s3):
+def make_csv(st, s3, session):
 
     merged = dict()
     header = ["Исходное имя файла", "Тип объекта", "Размер (мм)", "Число объектов", "Путь к файлу"]
@@ -496,7 +496,7 @@ def make_csv(st, s3):
            buffer = f.read()
 
     path = f"disk:/Приложения/arch_fragments/{st}/{st}.csv"
-    code = upload(buffer, path)
+    code = upload(buffer, path, session)
 
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -511,7 +511,7 @@ def make_csv(st, s3):
            buffer = f.read()
 
     path = f"disk:/Приложения/arch_fragments/{st}/{st}.xlsx"
-    code = upload(buffer, path)
+    code = upload(buffer, path, session)
 
     return code
 
