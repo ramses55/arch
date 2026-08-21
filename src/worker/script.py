@@ -67,17 +67,9 @@ session.mount("https://", adapter)
 
 def fun():
     
-    #img_limit = settings.img_limit
     #res_limit = settings.res_limit
     
         
-    ok = open("ok.csv", "w")
-    failed = open("failed.csv", "w")
-    
-    h = "Исходное имя файла|Тип объекта|Размер (мм)|Число объектов|Путь к файлу\n"
-    
-    ok.write(h)
-    failed.write(h)
     
     num = 0
     i = 0 #number of times while will iterate max
@@ -137,16 +129,27 @@ def fun():
                 except Exception as e:
                     print(f"An error occurred: {e}")
 
-        ok.close()
-        failed.close()
         executor.shutdown(wait=True)
-        
-    
+
+
+
+
+ok = open("ok.csv", "w")
+failed = open("failed.csv", "w")
+
+h = "Исходное имя файла|Тип объекта|Размер (мм)|Число объектов|Путь к файлу\n"
+
+ok.write(h)
+failed.write(h)
 
 
 for i in range(3):
     print(f"Started fun(): {i}")
     fun()
+
+ok.close()
+failed.close()
+
 
 make_csv("ok", s3, session)
 make_csv("failed", s3, session)

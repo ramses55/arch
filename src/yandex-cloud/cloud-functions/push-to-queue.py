@@ -20,7 +20,7 @@ access_key = os.getenv('access_key')
 
 
 
-limiter = AsyncLimiter(100, 1)
+limiter = AsyncLimiter(50, 1)
 
 
 
@@ -41,7 +41,7 @@ async def send_batch(client, batch):
             ]
         )
 
-async def main():
+async def m():
     session = aioboto3.Session()
 
     async with session.client(
@@ -182,6 +182,12 @@ def push_to_queue(files: list):
 #push_to_queue(files)
 
 
+print(f"oauth_token: {oauth_token}")
+print(f"queue_url: {queue_url}")
+print(f"access_key_id: {access_key_id}")
+print(f"access_key: {access_key}")
+
+
 mkdir('ok')
 mkdir('failed')
 mkdir('ok/orig')
@@ -192,4 +198,4 @@ mkdir('failed/orig')
 files = ls("")
 print("num of files:", len(files))
 
-asyncio.run(main())
+asyncio.run(m())

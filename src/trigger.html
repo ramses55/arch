@@ -33,7 +33,7 @@
         button:active {
             transform: scale(0.98);
         }
-        /* Стили для заблокированной кнопки */
+
         button:disabled {
             background-color: #a0aec0;
             cursor: not-allowed;
@@ -50,50 +50,99 @@
 </head>
 <body>
 
-    <!-- Скрытый фрейм, куда форма отправит ответ от Yandex Cloud -->
-    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="onFormSubmit()"></iframe>
-
-    <form action="https://serverless-workflows.api.cloud.yandex.net/workflows/v1/execution/dfqgbq5tu74fcd0lk3qk/start" method="POST" target="hidden_iframe" id="workflowForm">
-        <button type="submit" id="runBtn">Запустить процесс</button>
-    </form>
     
+<button id="runBtn" onclick="startWorkflow()">Запустить процесс</button>
     <div id="status">Нажмите кнопку для запуска</div>
 
     <script>
-        let isSubmitting = false;
-        let submitTimeout = null;
+        //let isSubmitting = false;
+        //let submitTimeout = null;
+        //
+        //document.getElementById('workflowForm').onsubmit = function(e) {
+        //    if (isSubmitting) {
+        //        e.preventDefault();
+        //        return false;
+        //    }
+        //
+        //    isSubmitting = true;
+        //
+        //    const btn = document.getElementById('runBtn');
+        //    const status = document.getElementById('status');
+        //    
+        //    btn.disabled = true;
+        //    status.style.color = '#555';
+        //    status.innerText = 'Запрос отправлен в облако...';
+        //
+        //    submitTimeout = setTimeout(() => {
+        //        isSubmitting = false;
+        //        btn.disabled = false;
+        //        status.style.color = '#555';
+        //        status.innerText = 'Можно запустить снова';
+        //    }, 10000);
+        //};
         
-        document.getElementById('workflowForm').onsubmit = function(e) {
-            if (isSubmitting) {
-                e.preventDefault();
-                return false;
-            }
-        
-            isSubmitting = true;
-        
-            const btn = document.getElementById('runBtn');
-            const status = document.getElementById('status');
-            
-            btn.disabled = true;
-            status.style.color = '#555';
-            status.innerText = 'Запрос отправлен в облако...';
-        
-            // Блокируем строго на 5 секунд
-            submitTimeout = setTimeout(() => {
-                isSubmitting = false;
-                btn.disabled = false;
-                status.style.color = '#555';
-                status.innerText = 'Можно запустить снова';
-            }, 10000);
-        };
-        
-        function onFormSubmit() {
-            // Игнорируем первичную загрузку iframe при старте страницы
-            if (!isSubmitting) return;
-        
-            const status = document.getElementById('status');
-            status.style.color = '#0070f3';
-            status.innerText = 'Запрос успешно ушел! Подождите перед повторным запуском...';
+        async function startWorkflow() {
+		const url_fun =  "https://functions.yandexcloud.net/d4e3klir6bn1f1kbifm1?integration=raw"
+		const url_work =  "https://serverless-workflows.api.cloud.yandex.net/workflows/v1/execution/dfqgbq5tu74fcd0lk3qk/start"
+
+		const status = document.getElementById('status');
+		const btn = document.getElementById('runBtn');
+
+
+		btn.disabled = true;
+    		btn.innerText = "Подождите (5с)...";
+
+		setTimeout(() => {
+		        btn.disabled = false;
+		        btn.innerText = "Запустить процесс";
+		    }, 5000); // 5000 milliseconds = 5 seconds
+
+		try {
+			const response_fun = await fetch(url_fun, {
+				method: 'POST'
+			});
+
+			if (response_fun.ok){
+				const data = await response_fun.json();
+				const queue_size = data.sum
+				console.log("Success! Workflow started:", queue_size);
+				//alert(`Функция успешно запущена! ${queue_size} в очереди`);
+				let fun_text = `${queue_size} изображений в очереди!`;
+				let work_text = "lol";
+
+				if (queue_size == 0){
+					const response_work = await fetch(url_work, {
+						method: 'POST'
+					});
+					console.log("Workflow response:", response_work);
+
+					if (response_work.ok){
+						alert("Workflow запущен");
+						work_text = "Workflow запущен!";
+					} else {
+            					alert("Ошибка при запуске workflow.");
+					}
+
+				} else{
+					alert("Очередь не пуста! Workflow не запущен!");
+					work_text = "Новый Workflow не запущен!";
+				}
+
+
+
+
+				status.innerText = fun_text + `\n` + work_text;
+
+			} else {
+ 				console.error("Server returned an error:", response.status);
+            			alert("Ошибка при запуске функции.");
+			}
+
+
+		} catch (error) {
+			console.error("Network error:", error);
+        		alert("Не удалось связаться с сервером.");
+		}
         }
     </script>
 
