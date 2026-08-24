@@ -19,7 +19,7 @@ def handler(event, context):
     queue_url = os.getenv("queue_url")
     access_key_id = os.getenv('access_key_id')
     access_key = os.getenv('access_key')
-    
+
     
     
     limiter = AsyncLimiter(50, 1)
