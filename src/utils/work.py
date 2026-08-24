@@ -181,4 +181,5 @@ def upload_part(q,sqs, queue_url, session):
     dt = time.perf_counter() - t0;
     dcpu = time.thread_time() - cpu0;
     #logging.info("Image upload %s took wall=%.3f s cpu=%.3f s", new_path, dt, dcpu)
+    print("Uploaded", new_path)
         

@@ -119,6 +119,7 @@ def fun():
 
                     if res == 0:
                         executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
+                        print("q_in size:", q_in.qsize(), "pushed to executor")
 
 
                     if res == 1 or q_in.qsize() == 0:
