@@ -124,7 +124,8 @@ def index2(text: list) -> str:
     '''
 
     for a in text:
-        if not a[0].isnumeric() and a[-1].isnumeric():
+        #if not a[0].isnumeric() and a[-1].isnumeric():
+        if a[-1].isnumeric():
             return a.replace('З', '3').replace('О', '0') #replaces letter for digit
 
 
