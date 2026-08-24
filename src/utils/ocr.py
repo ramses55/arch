@@ -107,7 +107,7 @@ def index1(text: list) -> str:
 
 
 
-def index2(text: list) -> str:
+def index2(text: list, ind1) -> str:
 
     '''
         This function tries to find ind2
@@ -124,8 +124,7 @@ def index2(text: list) -> str:
     '''
 
     for a in text:
-        #if not a[0].isnumeric() and a[-1].isnumeric():
-        if a[-1].isnumeric():
+        if not '.' in a and a[-1].isnumeric() and not ind1:
             return a.replace('З', '3').replace('О', '0') #replaces letter for digit
 
 

@@ -69,8 +69,10 @@ class result:
                 ) -> list:
         for label in self.label:
             text, code  = ocr(label, apiKey, folderId, session)
+            ind1 = index1(text)
+            ind2 = index2(text, ind1)
             if text is not None:
-                self.file_name.append(fix_cyr(index1(text) + "_" + index2(text)))
+                self.file_name.append(fix_cyr(ind1 + "_" + ind2))
             else:
                 self.file_name.append(f"OCR failed!!!: {code}")
                 
