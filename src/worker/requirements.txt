@@ -4,13 +4,13 @@ boto3
 Pillow
 requests
 
-uvicorn
-fastapi
+#uvicorn
+#fastapi
 
 
 pydantic_settings
 
-mysql-connector-python
+#mysql-connector-python
 #mysqlclient
 
 

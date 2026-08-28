@@ -21,7 +21,6 @@ def handler(event, context):
     access_key = os.getenv('access_key')
 
     
-    
     limiter = AsyncLimiter(50, 1)
     
     
@@ -214,3 +213,8 @@ def handler(event, context):
     print("6 mkdirs took", time.time() - start)
 
     return {"body": {"num_mes": len(files)}}
+
+
+
+if __name__ == "__main__":
+    handler(1,2)

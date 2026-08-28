@@ -18,8 +18,8 @@ import queue
 import cv2
 import numpy as np
 
-
-import ultralytics
+import onnxruntime as ort
+#import ultralytics
 
 
 import requests
@@ -58,7 +58,11 @@ thread_local = threading.local()
 q_in = queue.Queue()
 q_out = queue.Queue()
 
-model = ultralytics.YOLO("./weights/best.onnx", task='obb')
+#model = ultralytics.YOLO("./weights/best.onnx", task='obb')
+onnx = ort.InferenceSession(
+    "./weights/new-weight.onnx",
+    providers=["CPUExecutionProvider"]
+)
 
 session = requests.Session()
 adapter = requests.adapters.HTTPAdapter(pool_connections=40, pool_maxsize=40)
@@ -100,7 +104,7 @@ def fun():
 
             try:
                 #here it will sleep and wait for task
-                 res = model_part(q_in, q_out, model, ok, failed,
+                 res = model_part(q_in, q_out, onnx, ok, failed,
                                   session, wait=True)
                  if res == 0:
                     executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
@@ -112,7 +116,7 @@ def fun():
         
         while q_in.qsize() != 0:
                 try:
-                    res = model_part(q_in, q_out, model, ok, failed, session, wait=False)
+                    res = model_part(q_in, q_out, onnx, ok, failed, session, wait=False)
                     print("res", res)
 
                     print("q_in size:", q_in.qsize())
