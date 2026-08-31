@@ -15,6 +15,7 @@ oauth_token = settings.oauth_token
 access_key = settings.access_key_id
 secret_key = settings.access_key
 QUEUE_URL = settings.queue_url
+bucket_name = settings.bucket_name
 
 #sqs = boto3.client(
 #    "sqs",
@@ -449,7 +450,7 @@ def make_csv(st, s3, session):
     header = ["Исходное имя файла", "Тип объекта", "Размер (мм)", "Число объектов", "Путь к файлу"]
 
     try:
-        s3.download_file("for-csv", f"{st}-r.csv", f"{st}-r.csv")
+        s3.download_file(bucket_name, f"{st}-r.csv", f"{st}-r.csv")
 
         #it is important that older file goes first
         with open(f"{st}-r.csv", "r") as f:
@@ -489,7 +490,7 @@ def make_csv(st, s3, session):
         writer = csv.writer(f, delimiter = ",")
         writer.writerows(data)
 
-    s3.upload_file(f"{st}-res.csv", "for-csv", f"{st}-r.csv")
+    s3.upload_file(f"{st}-res.csv", bucket_name, f"{st}-r.csv")
 
 
     with open(f"{st}-res.csv", "rb") as f:

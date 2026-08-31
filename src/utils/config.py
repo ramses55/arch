@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     worker_url: str
     img_limit: int
     res_limit: int
+    bucket_name: str
 
     model_config = SettingsConfigDict(env_file=".env")
 
