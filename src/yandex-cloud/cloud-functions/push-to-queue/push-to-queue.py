@@ -10,7 +10,7 @@ import asyncio
     
 from datetime import datetime
 from itertools import islice
-from aiolimiter import AsyncLimiter
+#from aiolimiter import AsyncLimiter
 
 import time 
 
@@ -21,7 +21,7 @@ def handler(event, context):
     access_key = os.getenv('access_key')
 
     
-    limiter = AsyncLimiter(50, 1)
+    #limiter = AsyncLimiter(50, 1)
     
     
     sem = asyncio.Semaphore(16)
@@ -169,26 +169,6 @@ def handler(event, context):
     
         return files
     
-    
-    
-    def push_to_queue(files: list):
-        '''
-            This function pushes files to sqs-like Message Queue
-    
-            Args:
-                files (list): list of tuples (filepath, filename)
-        '''
-        for batch in chunks(files, 10):
-            sqs.send_message_batch(
-                QueueUrl=queue_url,
-                Entries=[
-                    {
-                        "Id": str(i),
-                        "MessageBody": json.dumps(msg),
-                    }
-                    for i, msg in enumerate(batch)
-                        ],
-            )
     
     
     
