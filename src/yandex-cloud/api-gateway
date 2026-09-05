@@ -2,8 +2,6 @@ openapi: 3.0.0
 info:
   title: Sample API
   version: 1.0.0
-servers:
-- url: https://d5do6kp6a7taqfurhoh2.g4vq2kuy.apigw.yandexcloud.net
 paths:
   /:
     get:
@@ -23,18 +21,34 @@ paths:
         allow-headers: [ 'Content-Type' ]
       x-yc-apigateway-integration:
         payload_format_version: '1.0'
-        function_id: d4e3klir6bn1f1kbifm1
+        function_id: ${num-mes-id}
         tag: $latest
         type: cloud_functions
-        service_account_id: aje1fn7esqtik399t6dp
+        service_account_id: ${sa-g-id}
+
+  /queue1:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: ${num-mes-id}
+        service_account_id: ${sa-g-id}
+
+#  /workflow:
+#      post:
+#        x-yc-apigateway-integration:
+#          type: workflows
+#          workflow_id: ${workflow-id}
+#          service_account_id: ${sa-g-id}
+#
+
 
   /workflow:
     get:
       x-yc-apigateway-integration:
         method: POST
         type: http
-        service_account_id: aje1fn7esqtik399t6dp
-        url: https://serverless-workflows.api.cloud.yandex.net/workflows/v1/execution/dfqgbq5tu74fcd0lk3qk/start
+        service_account_id: ${sa-g-id}
+        url: ${workflow_url}
       requestBody:
         content:
           application/json:
@@ -43,7 +57,7 @@ paths:
                 type: static
                 template:
                   input:
-                    inputJson: ${.|tojson}
-                  workflow_id: dfqgbq5tu74fcd0lk3qk
+                    inputJson: $${.|tojson}
+                  workflow_id: ${workflow-id}
         description: Serverless API Gateway integration with Yandex Workflows
 

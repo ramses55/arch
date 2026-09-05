@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     oauth_token: str
     folder_id: str
     api_key: str
-    worker_url: str
+    #worker_url: str
     img_limit: int
     res_limit: int
     bucket_name: str

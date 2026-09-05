@@ -11,6 +11,11 @@ terraform {
     archive = {
       source = "hashicorp/archive"
     }
+
+    docker = {
+          source  = "kreuzwerker/docker"
+          version = "~> 4.5"
+    }
   }
 
   required_version = ">= 1.00"
@@ -18,6 +23,18 @@ terraform {
 
 provider "yandex" {
 }
+
+
+provider "docker" {
+	registry_auth {
+	    address  = "cr.yandex"
+	    username = "iam"
+	    password = data.yandex_client_config.client.iam_token
+	  }
+}
+
+
+
 
 provider "random" {
 }

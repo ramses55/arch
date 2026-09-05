@@ -34,5 +34,8 @@ def handler(event, context):
     for k,v in attr.items():
         s += int(v)
     
-    return {"sum": s}
-
+    return {
+        "statusCode": 200,
+        "isBase64Encoded": False,
+        "body": {"num_mes": s}
+        }

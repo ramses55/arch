@@ -30,7 +30,6 @@ oauth_token = settings.oauth_token
 access_key_id = settings.access_key_id
 access_key = settings.access_key
 QUEUE_URL = settings.queue_url
-worker_url = settings.worker_url
 img_limit = settings.img_limit
 
 sqs = boto3.client(

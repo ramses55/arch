@@ -12,10 +12,16 @@ variable "name_prefix" {
 }
 
 
+variable "oauth_token" {
+  type        = string
+  description = "Oauth token provided for certain yandex disk user for certain app"
+  sensitive   = true
+}
 
 variable "yc_access_key" {
   type        = string
   description = "Static access key ID for the service account"
+  sensitive   = true
 }
 
 variable "yc_secret_key" {

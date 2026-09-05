@@ -3,7 +3,7 @@ start: check_queue
 steps:
   check_queue:
     functionCall:
-      functionId: d4e3klir6bn1f1kbifm1
+      functionId: ${num-mes-id}
       next: decide1
   decide1:
     switch:
@@ -16,21 +16,22 @@ steps:
     success: {}
   process:
     functionCall:
-      functionId: d4etikabq59e6fd1no5i
+      functionId: ${push-to-queue-id}
       next: step-while
   step-while:
     while:
       condition: \(.body.num_mes > 0)
+      #condition: \(.sum > 0)
       maxIterations: 100
       do:
         start: container
         steps:
           container:
             containerCall:
-              containerId: bba0mj8jecpvlh9gd894
+              containerId: ${container-id}
               next: check_queue1
               output: '{}'
           check_queue1:
             functionCall:
-              functionId: d4e3klir6bn1f1kbifm1
+              functionId: ${num-mes-id}
     description: ''

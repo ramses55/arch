@@ -82,8 +82,11 @@
         //};
         
         async function startWorkflow() {
-		const url_fun =  "https://d5do6kp6a7taqfurhoh2.g4vq2kuy.apigw.yandexcloud.net/queue"
-		const url_work =  "https://d5do6kp6a7taqfurhoh2.g4vq2kuy.apigw.yandexcloud.net/workflow"
+		const url = "https://" + "d5dfh79sr2qmtdcasuj6.7qsg961h.apigw.yandexcloud.net"
+		//const url_fun =  "https://d5do6kp6a7taqfurhoh2.g4vq2kuy.apigw.yandexcloud.net/queue"
+		//const url_work =  "https://d5do6kp6a7taqfurhoh2.g4vq2kuy.apigw.yandexcloud.net/workflow"
+		const url_fun = url + "/queue"
+		const url_work = url + "/workflow"
 
 		const status = document.getElementById('status');
 		const btn = document.getElementById('runBtn');
