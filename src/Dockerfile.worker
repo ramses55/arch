@@ -13,10 +13,6 @@ WORKDIR /app
 
 
 
-
-ENV TORCH_HOME=/app/models
- 
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-dejavu \
     && rm -rf /var/lib/apt/lists/*

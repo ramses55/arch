@@ -1,3 +1,3 @@
-output "apiGateway_url" {
-  value = yandex_api_gateway.gateway.domain
-}
+#output "apiGateway_url" {
+#  value = yandex_api_gateway.gateway.domain
+#}
