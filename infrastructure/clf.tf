@@ -1,6 +1,4 @@
 locals {
-  ymq_name      = "${var.name_prefix}-ymq"
-  ymq_dead_name = "${var.name_prefix}-ymq-dead"
   f_num_name    = "${var.name_prefix}-f-num-mes"
   f_push_name   = "${var.name_prefix}-f-push"
   f_num_path    = "../src/yandex-cloud/cloud-functions/num-mes/"
@@ -8,57 +6,34 @@ locals {
 }
 
 
-resource "yandex_message_queue" "dead_queue" {
-  name       = local.ymq_dead_name
-  fifo_queue = false
 
-  access_key = var.yc_access_key
-  secret_key = var.yc_secret_key
+#Functions will need service account with following roles
+variable "functions_roles" {
+  type = set(string)
 
-}
-
-
-resource "yandex_message_queue" "main_queue" {
-  name       = local.ymq_name
-  fifo_queue = false
-
-
-  access_key = var.yc_access_key
-  secret_key = var.yc_secret_key
-
-  redrive_policy = jsonencode({
-    deadLetterTargetArn = yandex_message_queue.dead_queue.arn
-    maxReceiveCount     = 3
-  })
+  default = [
+ 	"ymq.reader",
+ 	"ymq.writer",
+ 	"lockbox.payloadViewer"
+  ]
 }
 
 
 
 
-#service account for message the main message queue
 resource "yandex_iam_service_account" "sa-mes" {
   name = "sa-num-mes"
 }
 
-resource "yandex_resourcemanager_folder_iam_member" "rq" {
+
+resource "yandex_resourcemanager_folder_iam_member" "fr" {
+  for_each = var.functions_roles
+
   folder_id = var.folder_id
-  role      = "ymq.reader"
+  role      = each.key
   member    = "serviceAccount:${yandex_iam_service_account.sa-mes.id}"
 }
 
-
-resource "yandex_resourcemanager_folder_iam_member" "rw" {
-  folder_id = var.folder_id
-  role      = "ymq.writer"
-  member    = "serviceAccount:${yandex_iam_service_account.sa-mes.id}"
-}
-
-
-resource "yandex_resourcemanager_folder_iam_member" "rs1" {
-  folder_id = var.folder_id
-  role      = "lockbox.payloadViewer"
-  member    = "serviceAccount:${yandex_iam_service_account.sa-mes.id}"
-}
 
 resource "yandex_iam_service_account_static_access_key" "key-mes" {
   service_account_id = yandex_iam_service_account.sa-mes.id
@@ -126,7 +101,7 @@ resource "yandex_function" "num_mes" {
     queue_url = yandex_message_queue.main_queue.id
   }
 
-depends_on = [yandex_resourcemanager_folder_iam_member.rs1]
+  depends_on = [yandex_resourcemanager_folder_iam_member.fr]
 
 }
 
@@ -176,10 +151,12 @@ resource "yandex_function" "push-to-queue" {
     key                  = "oauth_token"
     environment_variable = "oauth_token"
   }
+
+
   environment = {
     queue_url = yandex_message_queue.main_queue.id
   }
 
-	depends_on = [yandex_resourcemanager_folder_iam_member.rs1]
+  depends_on = [yandex_resourcemanager_folder_iam_member.fr]
 }
 
