@@ -23,6 +23,7 @@ resource "yandex_resourcemanager_folder_iam_member" "wc" {
 
 
 resource "yandex_serverless_workflow" "workflow" {
+	depends_on = [yandex_serverless_container.container, yandex_function.push-to-queue, yandex_function.num_mes ]
 	name = local.workflow_name
 	folder_id = var.folder_id
 	service_account_id = yandex_iam_service_account.sa-w.id

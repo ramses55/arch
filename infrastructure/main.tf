@@ -126,6 +126,8 @@ resource "yandex_function" "num_mes" {
     queue_url = yandex_message_queue.main_queue.id
   }
 
+depends_on = [yandex_resourcemanager_folder_iam_member.rs1]
+
 }
 
 
@@ -178,5 +180,6 @@ resource "yandex_function" "push-to-queue" {
     queue_url = yandex_message_queue.main_queue.id
   }
 
+	depends_on = [yandex_resourcemanager_folder_iam_member.rs1]
 }
 

@@ -30,6 +30,7 @@ resource "yandex_resourcemanager_folder_iam_member" "gw" {
 
 
 resource "yandex_api_gateway" "gateway"{
+	depends_on = [yandex_serverless_workflow.workflow]
 	name = local.apiGateway_name
 	spec = templatefile( local.file_g_path, {
 		sa-g-id = yandex_iam_service_account.sa-g.id,

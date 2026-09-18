@@ -1,7 +1,5 @@
 locals {
   container_name = "${var.name_prefix}-container"
-  registry_name  = "${var.name_prefix}-registry"
-  repo_name      = "${var.name_prefix}-worker"
   sa_name 	 = "${var.name_prefix}-sa-con"
   bucket_name 	 = "${var.name_prefix}-bucket"
 
@@ -37,6 +35,7 @@ resource "yandex_resourcemanager_folder_iam_member" "s3" {
 
 
 
+#container needs bucket
 resource "yandex_storage_bucket" "b" {
   folder_id = var.folder_id
   bucket_prefix = "${local.bucket_name}"
@@ -95,7 +94,7 @@ resource "yandex_serverless_container" "container" {
 
 
   image {
-    url = docker_registry_image.worker_push.name
+    url = "cr.yandex/mirror/library/alpine:latest"
 
     environment = {
       queue_url = yandex_message_queue.main_queue.id
@@ -129,82 +128,4 @@ resource "yandex_serverless_container" "container" {
     environment_variable = "access_key"
   }
 
-  depends_on = [ docker_registry_image.worker_push ]
 }
-
-
-
-
-
-
-
-
-
-
-
-##########################################
-
-data "yandex_client_config" "client" {}
-
-resource "yandex_container_registry" "cr" {
-  name = local.registry_name
-
-}
-
-
-resource "yandex_container_repository" "repo" {
-	name = "${yandex_container_registry.cr.id}/${local.repo_name}"
-
-}
-
-
-resource "docker_image" "worker" {
-  name = "cr.yandex/${yandex_container_registry.cr.id}/worker:latest"
-
-  build {
-    context    = "../src/"
-    dockerfile = "Dockerfile.worker"
-  }
-
-  lifecycle {
-    replace_triggered_by = [
-      yandex_container_registry.cr.id
-    ]
-  }
-
-  depends_on = [yandex_container_registry.cr]
-}
-
-
-
-resource "docker_registry_image" "worker_push" {
-  name = docker_image.worker.name
-
-  keep_remotely = false
-
-
-  lifecycle {
-    replace_triggered_by = [
-      yandex_container_registry.cr.id
-    ]
-  }
-}
-
-
-
-
-
-
-
-#resource "docker_registry_image" "worker" {
-#  name = "cr.yandex/${yandex_container_repository.repo.name}:latest"
-#
-#  build {
-#    context    = "../src/"
-#    dockerfile = "Dockerfile.worker"
-#  }
-#  depends_on = [ yandex_container_repository.repo, yandex_container_registry.cr ]
-#}
-#
-
-
