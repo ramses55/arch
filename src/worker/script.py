@@ -8,6 +8,7 @@ from utils import work, download_b, mv
 from utils import upload_part, model_part, download_part, make_csv
 
 import sys
+import os
 
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -18,8 +19,14 @@ import queue
 import cv2
 import numpy as np
 
+
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 import onnxruntime as ort
-#import ultralytics
 
 
 import requests
@@ -48,7 +55,8 @@ s3 = boto3.client(service_name='s3',
 
 
 
-max_w=6
+# max number of workers
+max_w=15
 
 logging.basicConfig(filename=f'log{max_w}', level=logging.INFO)
 
@@ -57,11 +65,26 @@ thread_local = threading.local()
 q_in = queue.Queue()
 q_out = queue.Queue()
 
-#model = ultralytics.YOLO("./weights/best.onnx", task='obb')
+
+opts = ort.SessionOptions()
+
+# otherway onnx runs slower because of thread thrashing
+# Explicitly force 1 thread to completely stop ONNX from calculating affinity
+opts.intra_op_num_threads = 1
+opts.inter_op_num_threads = 1
+
+# Prevent global thread pool scaling issues
+opts.use_per_session_threads = True
+
+
+
 onnx = ort.InferenceSession(
     "./weights/new-weight.onnx",
+    sess_options=opts,
     providers=["CPUExecutionProvider"]
 )
+
+
 
 session = requests.Session()
 adapter = requests.adapters.HTTPAdapter(pool_connections=40, pool_maxsize=40)
@@ -74,8 +97,10 @@ def fun():
     
         
     
+    # limits number of processed messages 
     num = 0
-    i = 0 #number of times while will iterate max
+    # limits number of times while will iterate max
+    i = 0 
 
     with ThreadPoolExecutor(max_workers=max_w) as executor:
         while(num < img_limit and i < 10):
@@ -102,7 +127,7 @@ def fun():
                 executor.submit(download_part, message, q_in, session)
 
             try:
-                #here it will sleep and wait for task
+                # here it will sleep and wait for task
                  res = model_part(q_in, q_out, onnx, ok, failed,
                                   session, wait=True)
                  if res == 0:

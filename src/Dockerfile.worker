@@ -26,4 +26,4 @@ COPY ./worker/ ./worker/
 COPY ./weights/new-weight.onnx ./weights/new-weight.onnx
 
 
-CMD ["python", "-m", "worker.script"]
+CMD ["python", "-u", "-m", "worker.script"]

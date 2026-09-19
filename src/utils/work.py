@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import os
+import sys
 import time
 
 from .onnx_result import onnx_result, preprosses
@@ -41,7 +42,7 @@ def download_part(message, q, session):
 
     dt = time.perf_counter() - t0;
     dcpu = time.thread_time() - cpu0;
-    #logging.info("Download %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+    logging.info("Download %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
 
 
 
@@ -58,11 +59,33 @@ def model_part(queue_in, queue_out, onnx, file_ok, file_failed, session, wait):
     except queue.Empty:
         return 1
 
+    t2 = time.perf_counter()
+    cpu2 = time.thread_time()
     prep_res = preprosses(image)
+    dt = time.perf_counter() - t2;
+    dcpu = time.thread_time() - cpu2;
+    logging.info("preprocess %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+
+
+    t3 = time.perf_counter()
+    cpu3 = time.thread_time()
     onnx_res0 = onnx.run(None, {'images': prep_res})[0][0]
+    dt = time.perf_counter() - t3;
+    dcpu = time.thread_time() - cpu3;
+    logging.info("onnx inf %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+
+
+
+    t4 = time.perf_counter()
+    cpu4 = time.thread_time()
     o = onnx_result(onnx_res = onnx_res0, filename = filename,
                 orig_image = image, new_shape = onnx.get_inputs()[0].shape,
                 use_nms = True, conf = 0.05, thres = 0.4)       
+
+    dt = time.perf_counter() - t4;
+    dcpu = time.thread_time() - cpu4;
+    #profile_path = onnx.end_profiling()
+    logging.info("onnx result %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
 
     #print(filename)
     #output = model(image,
@@ -77,7 +100,7 @@ def model_part(queue_in, queue_out, onnx, file_ok, file_failed, session, wait):
     o.all(session)
     dt = time.perf_counter() - t01;
     dcpu = time.thread_time() - cpu01;
-    #logging.info("OCR %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+    logging.info("OCR %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
     m = o.csv_res()
     buffer = o.draw()
     ext = filename.split('.')[-1]
@@ -109,7 +132,7 @@ def model_part(queue_in, queue_out, onnx, file_ok, file_failed, session, wait):
 
     dt = time.perf_counter() - t0;
     dcpu = time.thread_time() - cpu0;
-    #logging.info("Image process %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+    logging.info("Image process %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
     return 0
 
 
@@ -128,4 +151,4 @@ def upload_part(q,sqs, queue_url, session):
 
     dt = time.perf_counter() - t0;
     dcpu = time.thread_time() - cpu0;
-    #logging.info("Image upload %s took wall=%.3f s cpu=%.3f s", new_path, dt, dcpu)
+    logging.info("Image upload %s took wall=%.3f s cpu=%.3f s", new_path, dt, dcpu)
