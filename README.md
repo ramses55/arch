@@ -7,9 +7,10 @@ Small Python application for archaeological fragments detection using [**OpenCV*
 
 To initialize and deploy the full serverless stack to Yandex Cloud, run the following commands:
 
-### 1. Clone repository to local machine
+### 1. Clone repository to local machine using Git LFS
 ```bash
 git clone https://github.com/ramses55/arch.git
+cd arch
 ```
 
 
@@ -23,7 +24,7 @@ yc init
   #### a) Navigate to infrastructure/ in cloned repo
      
 ```bash
-cd infrastructure/
+cd infrastructure
 ```
 
   #### b) Export essential variables
@@ -36,7 +37,6 @@ export TF_VAR_folder_id=$(yc config get folder-id)
 ```
   #### c) Create a service account for terraform. Be sure to save access key pair as secret value will be shown once.
   
-  <!-- ##### 1. Create service account with name admin-sa -->
 
 ```bash
 yc iam service-account create --name admin-sa
@@ -44,18 +44,6 @@ yc resource-manager folder add-access-binding $YC_FOLDER_ID --role admin --servi
 yc iam access-key create --service-account-name admin-sa
 ```
 
-<!--        2. Assign admin role to newly created service account admin-sa 
-
-```bash
-    yc resource-manager folder add-access-binding $YC_FOLDER_ID --role admin --service-account-name admin-sa
-```
-
-        3. Generate the static key pair for creation of SQS-like YMQ. Be sure to save it as secret value will be shown once.
-
-```bash
-yc iam access-key create --service-account-name admin-sa
-```
--->
   #### d) Obtain the oauth_token by following the link
 ```bash
 https://oauth.yandex.ru/authorize?response_type=token&client_id=abd02f50dcb04dbcb7b867e3a1672e7f
