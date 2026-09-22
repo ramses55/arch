@@ -94,13 +94,13 @@
 
 
 		btn.disabled = true;
-    		btn.innerText = "Подождите (5с)...";
+    		btn.innerText = "Подождите (10с)...";
 		status.innerText = "Попытка запуска процесса";
 
 		setTimeout(() => {
 		        btn.disabled = false;
 		        btn.innerText = "Запустить процесс";
-		    }, 5000); 
+		    }, 10000); 
 
 		try {
 			const response_fun = await fetch(url_fun, {
