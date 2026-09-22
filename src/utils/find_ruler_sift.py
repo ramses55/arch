@@ -38,7 +38,7 @@ def filter_features(mask, kp, des):
 
 def save_template(template: np.ndarray)-> bool:
     sift = cv2.SIFT_create()
-    kp, des = sift.detectAndCompute(template, None)
+    kp, des = sift.detectAndCompute(cv2.cvtColor(template, cv2.COLOR_BGR2GRAY), None)
     
     kp_array = np.array([
         (k.pt[0], k.pt[1], k.size, k.angle, k.response, k.octave, k.class_id)

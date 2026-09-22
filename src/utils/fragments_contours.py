@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 def fragments_contours(image: np.ndarray,
-                       min_area: float = 0.001
+                       min_area: float = 0.0005
                        ) -> list:
 
     '''
@@ -52,7 +52,13 @@ def fragments_contours(image: np.ndarray,
     new_cnt = list()
     for i in cnt:
         area = cv2.contourArea(i)
-        if area > part_image_area:
+        rect = cv2.minAreaRect(i)
+        longer = max(rect[1])
+        shorter = min(rect[1])
+        if longer * shorter == 0:
+            continue
+        ratio =  longer / shorter
+        if area > part_image_area and ratio < 10:
             new_cnt.append(i)
             areas.append(cv2.contourArea(i))
     

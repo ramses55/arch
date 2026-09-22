@@ -15,7 +15,17 @@ def extract(vert):
         res[i] = a
     return res 
     
-
+def fix_cyr(text: str) -> str:
+    tr = str.maketrans({
+        'A': 'А', 'B': 'В', 'E': 'Е', 'K': 'К', 'M': 'М', 
+        'H': 'Н', 'O': 'О', 'P': 'Р', 'C': 'С', 'T': 'Т', 
+        'X': 'Х', 'Y': 'У',
+        
+        'a': 'а', 'e': 'е', 'k': 'к', 'o': 'о', 'p': 'р', 
+        'c': 'с', 'x': 'х', 'y': 'у'
+    })
+    
+    return text.translate(tr)
 
 
 def inside(box, box1):
@@ -114,7 +124,7 @@ def index2(text: list) -> str:
     '''
 
     for a in text:
-        if not a[0].isnumeric() and a[-1].isnumeric():
+        if not '.' in a and a[-1].isnumeric():
             return a.replace('З', '3').replace('О', '0') #replaces letter for digit
 
 
@@ -152,8 +162,9 @@ def date(text: list) -> str:
 
 
 def ocr(image: np.ndarray,
-        apiKey_path: pathlib.PosixPath,
-        folderId_path: pathlib.PosixPath,
+        apiKey: str,
+        folderId: str,
+        session,
         packet_box=None,
         label_box=None
         ) -> list:
@@ -176,13 +187,10 @@ def ocr(image: np.ndarray,
 
     '''
 
-    with open(apiKey_path, "r") as f:
-        token = f.read().strip('\n')
+    token = apiKey
     
     
-    with open(folderId_path, "r") as f:
-        folder_id = f.read().strip('\n')
-    
+    folder_id = folderId    
     
     # yandex cloud ocr expects encoded image as input
     success, buffer = cv2.imencode(".jpg", image)
@@ -208,15 +216,20 @@ def ocr(image: np.ndarray,
               "x-folder-id": folder_id,
               "x-data-logging-enabled": "true"}
       
-    w1 = requests.post(url=url,
-                       headers=headers,
-                       data=json.dumps(data1),
-                       timeout=10)
+    try:
+        w1 = session.post(url=url,
+                           headers=headers,
+                           data=json.dumps(data1),
+                           timeout=10)
+
+    except requests.exceptions.ConnectionError:
+        print("OCR connection error!")
+        return None, w1.status_code
     
     
     if w1.status_code != 200:
-        print(f"OCR failed!: {w1.status_code}")
-        return None
+        print(f"OCR failed!!!: {w1.status_code}")
+        return None, w1.status_code
 
 
 
@@ -226,11 +239,6 @@ def ocr(image: np.ndarray,
     text = list(set(text1))
 
 
-    return text
+    return text, w1.status_code
 
 
-    
-    
-    
-
-    

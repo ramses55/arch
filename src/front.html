@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запуск</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        button {
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background-color: #0070f3;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0, 112, 243, 0.3);
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background-color: #0051cb;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+
+    
+<button id="runBtn" onclick="startWorkflow()">Запустить процесс</button>
+    <div id="status">Нажмите кнопку для запуска</div>
+
+    <script>
+        //let isSubmitting = false;
+        //let submitTimeout = null;
+        //
+        //document.getElementById('workflowForm').onsubmit = function(e) {
+        //    if (isSubmitting) {
+        //        e.preventDefault();
+        //        return false;
+        //    }
+        //
+        //    isSubmitting = true;
+        //
+        //    const btn = document.getElementById('runBtn');
+        //    const status = document.getElementById('status');
+        //    
+        //    btn.disabled = true;
+        //    status.style.color = '#555';
+        //    status.innerText = 'Запрос отправлен в облако...';
+        //
+        //    submitTimeout = setTimeout(() => {
+        //        isSubmitting = false;
+        //        btn.disabled = false;
+        //        status.style.color = '#555';
+        //        status.innerText = 'Можно запустить снова';
+        //    }, 10000);
+        //};
+        
+        async function startWorkflow() {
+		const url = "https://" + "${api-gateway-url}"
+		//const url = "https://" + "d5dfh79sr2qmtdcasuj6.7qsg961h.apigw.yandexcloud.net"
+		//const url_fun =  "https://d5do6kp6a7taqfurhoh2.g4vq2kuy.apigw.yandexcloud.net/queue"
+		//const url_work =  "https://d5do6kp6a7taqfurhoh2.g4vq2kuy.apigw.yandexcloud.net/workflow"
+		const url_fun = url + "/queue"
+		const url_work = url + "/workflow"
+
+		const status = document.getElementById('status');
+		const btn = document.getElementById('runBtn');
+
+
+		btn.disabled = true;
+    		btn.innerText = "Подождите (10с)...";
+		status.innerText = "Попытка запуска процесса";
+
+		setTimeout(() => {
+		        btn.disabled = false;
+		        btn.innerText = "Запустить процесс";
+		    }, 10000); 
+
+		try {
+			const response_fun = await fetch(url_fun, {
+				method: 'GET'
+			});
+
+			if (response_fun.ok){
+				const data = await response_fun.json();
+				const queue_size = data.num_mes
+				console.log("Success! Workflow started:", queue_size);
+				//$$ are for terraform
+				//alert(`Функция успешно запущена! $${queue_size} в очереди`);
+				let fun_text = `Изображений в очереди: $${queue_size}`;
+				let work_text = "lol";
+
+				if (queue_size == 0){
+					const response_work = await fetch(url_work, {
+						method: 'GET'
+					});
+					console.log("Workflow response:", response_work);
+
+					if (response_work.ok){
+						//alert("Процесс запущен");
+						work_text = "Процесс запущен!";
+					} else {
+            					alert("Ошибка при запуске workflow.");
+					}
+
+				} else{
+					//alert("Очередь не пуста! Workflow не запущен!");
+					work_text = "Новый процесс не запущен!";
+				}
+
+
+
+
+				status.innerText = fun_text + `\n` + work_text;
+
+			} else {
+ 				console.error("Server returned an error:", response.status);
+            			alert("Ошибка при запуске функции.");
+			}
+
+
+		} catch (error) {
+			console.error("Network error:", error);
+        		alert("Не удалось связаться с сервером.");
+		}
+        }
+    </script>
+
+</body>
+</html>

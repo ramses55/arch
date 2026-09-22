@@ -1,0 +1,37 @@
+yawl: '0.1'
+start: check_queue
+steps:
+  check_queue:
+    functionCall:
+      functionId: ${num-mes-id}
+      next: decide1
+  decide1:
+    switch:
+      choices:
+        - condition: \(.body.num_mes > 0)
+          next: finish
+      default:
+        next: process
+  finish:
+    success: {}
+  process:
+    functionCall:
+      functionId: ${push-to-queue-id}
+      next: step-while
+  step-while:
+    while:
+      condition: \(.body.num_mes > 0)
+      #condition: \(.sum > 0)
+      maxIterations: 100
+      do:
+        start: container
+        steps:
+          container:
+            containerCall:
+              containerId: ${container-id}
+              next: check_queue1
+              output: '{}'
+          check_queue1:
+            functionCall:
+              functionId: ${num-mes-id}
+    description: ''

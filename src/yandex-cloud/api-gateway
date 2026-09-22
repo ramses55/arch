@@ -1,0 +1,63 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  version: 1.0.0
+paths:
+  /:
+    get:
+      x-yc-apigateway-integration:
+        type: dummy
+        content:
+          '*': Hello, World!
+        http_code: 200
+        http_headers:
+          Content-Type: text/plain
+          
+  /queue:
+    get:
+      x-yc-apigateway-cors:
+        allow-origins: [ '*' ]
+        allow-methods: [ 'GET']
+        allow-headers: [ 'Content-Type' ]
+      x-yc-apigateway-integration:
+        payload_format_version: '1.0'
+        function_id: ${num-mes-id}
+        tag: $latest
+        type: cloud_functions
+        service_account_id: ${sa-g-id}
+
+  /queue1:
+    get:
+      x-yc-apigateway-integration:
+        type: cloud_functions
+        function_id: ${num-mes-id}
+        service_account_id: ${sa-g-id}
+
+#  /workflow:
+#      post:
+#        x-yc-apigateway-integration:
+#          type: workflows
+#          workflow_id: ${workflow-id}
+#          service_account_id: ${sa-g-id}
+#
+
+
+  /workflow:
+    get:
+      x-yc-apigateway-integration:
+        method: POST
+        type: http
+        service_account_id: ${sa-g-id}
+        url: ${workflow_url}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              x-yc-schema-mapping:
+                type: static
+                template:
+                  input:
+                    inputJson: $${.|tojson}
+                  workflow_id: ${workflow-id}
+        description: Serverless API Gateway integration with Yandex Workflows
+
