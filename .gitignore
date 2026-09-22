@@ -285,4 +285,5 @@ terraform.rc
 
 *.csv
 
-
+#model weights
+src/weights/
