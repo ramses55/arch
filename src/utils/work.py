@@ -30,7 +30,7 @@ def download_part(message, q, session):
 
     if type(res) is int:
         print(f"Error download: {res}. {path}")
-        #mv(path, "failed/orig/")
+        mv(path, "completely-failed/" + filename)
         
 
     else:
@@ -50,6 +50,7 @@ def model_part(queue_in, queue_out, onnx, file_ok, file_failed, session, wait):
     t0 = time.perf_counter()
     cpu0 = time.thread_time()
 
+    global current_item
     try:
         if wait:
             path, filename, receipt_handle, image = queue_in.get(timeout=5)
@@ -59,6 +60,7 @@ def model_part(queue_in, queue_out, onnx, file_ok, file_failed, session, wait):
     except queue.Empty:
         return 1
 
+    current_item = (path, filename, receipt_handle, image)
     t2 = time.perf_counter()
     cpu2 = time.thread_time()
     prep_res = preprosses(image)

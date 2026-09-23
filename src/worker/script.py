@@ -20,6 +20,7 @@ import cv2
 import numpy as np
 
 
+#this prevents thread thrashing 
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
@@ -56,7 +57,7 @@ s3 = boto3.client(service_name='s3',
 
 
 # max number of workers
-max_w=15
+max_w=5
 
 logging.basicConfig(filename=f'log{max_w}', level=logging.INFO)
 
@@ -64,16 +65,16 @@ thread_local = threading.local()
 
 q_in = queue.Queue()
 q_out = queue.Queue()
+current_item = None
 
 
 opts = ort.SessionOptions()
 
 # otherway onnx runs slower because of thread thrashing
-# Explicitly force 1 thread to completely stop ONNX from calculating affinity
 opts.intra_op_num_threads = 1
 opts.inter_op_num_threads = 1
 
-# Prevent global thread pool scaling issues
+# prevent global thread pool scaling issues
 opts.use_per_session_threads = True
 
 
@@ -134,8 +135,15 @@ def fun():
                     executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
 
             except Exception as e:
-                 print(f"An error occurred: {e}")
+                 path, filename, receipt_handle, image = current_item
+                 print(f"An error occurred in model_part {filename}: {e}")
+                 print("=============================")
                  traceback.print_exc()
+                 print("=============================")
+                 mv(path, "completely-failed/" + filename)
+                 q_in.task_done()
+                 sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=receipt_handle)
+
         
         
         while q_in.qsize() != 0:
@@ -157,7 +165,15 @@ def fun():
 
 
                 except Exception as e:
-                    print(f"An error occurred: {e}")
+                    path, filename, receipt_handle, image = current_item
+                    print(f"An error occurred in model_part {filename}: {e}")
+                    print("=============================")
+                    traceback.print_exc()
+                    print("=============================")
+                    mv(path, "completely-failed/" + filename)
+                    q_in.task_done()
+                    sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=receipt_handle)
+                    #print(f"An error occurred in upload_part: {e}")
 
         executor.shutdown(wait=True)
 
