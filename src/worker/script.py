@@ -65,7 +65,6 @@ thread_local = threading.local()
 
 q_in = queue.Queue()
 q_out = queue.Queue()
-current_item = None
 
 
 opts = ort.SessionOptions()
@@ -118,62 +117,37 @@ def fun():
             m1 = [ (json.loads(m["Body"]), m["ReceiptHandle"]) for m in messages]
             messages = [ (a[0], a[1], b) for a,b in m1]
         
-        
             num += len(messages)
             if (len(messages) == 0):
                 i+=1
                 continue
 
             for message in messages:
-                executor.submit(download_part, message, q_in, session)
+                executor.submit(download_part, message, sqs, QUEUE_URL, q_in, session)
 
-            try:
-                # here it will sleep and wait for task
-                 res = model_part(q_in, q_out, onnx, ok, failed,
-                                  session, wait=True)
-                 if res == 0:
-                    executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
-
-            except Exception as e:
-                 path, filename, receipt_handle, image = current_item
-                 print(f"An error occurred in model_part {filename}: {e}")
-                 print("=============================")
-                 traceback.print_exc()
-                 print("=============================")
-                 mv(path, "completely-failed/" + filename)
-                 q_in.task_done()
-                 sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=receipt_handle)
+            
+            # here it will sleep and wait for task
+            res = model_part(q_in, q_out, onnx, ok, failed,
+                              session, sqs, QUEUE_URL, wait=True)
+            if res == 0:
+                executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
 
         
-        
+
         while q_in.qsize() != 0:
-                try:
-                    res = model_part(q_in, q_out, onnx, ok, failed, session, wait=False)
-                    print("res", res)
+                res = model_part(q_in, q_out, onnx, ok, failed,
+                                  session, sqs, QUEUE_URL, wait=False)
+                print("res", res)
 
-                    print("q_in size:", q_in.qsize())
+                print("q_in size:", q_in.qsize())
 
-                    if res == 0:
-                        executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
-                        print("q_in size:", q_in.qsize(), "pushed to executor")
-
-
-                    if res == 1 or q_in.qsize() == 0:
-                        break
+                if res == 0:
+                    executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
+                    print("q_in size:", q_in.qsize(), "pushed to executor")
 
 
-
-
-                except Exception as e:
-                    path, filename, receipt_handle, image = current_item
-                    print(f"An error occurred in model_part {filename}: {e}")
-                    print("=============================")
-                    traceback.print_exc()
-                    print("=============================")
-                    mv(path, "completely-failed/" + filename)
-                    q_in.task_done()
-                    sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=receipt_handle)
-                    #print(f"An error occurred in upload_part: {e}")
+                if res == 1 or q_in.qsize() == 0:
+                    break
 
         executor.shutdown(wait=True)
 

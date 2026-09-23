@@ -3,6 +3,7 @@ import numpy as np
 import os
 import sys
 import time
+import traceback
 
 from .onnx_result import onnx_result, preprosses
 
@@ -21,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 
-def download_part(message, q, session):
+def download_part(message, sqs, QUEUE_URL, q, session):
     t0 = time.perf_counter()
     cpu0 = time.thread_time()
     path, filename, receipt_handle = message
@@ -29,8 +30,10 @@ def download_part(message, q, session):
     res = download_b(path, session)
 
     if type(res) is int:
-        print(f"Error download: {res}. {path}")
+        #print(f"Error download: {res}. {path}")
         mv(path, "completely-failed/" + filename)
+        sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=receipt_handle)
+        logging.info("Error download: %d. %s", res, filename)
         
 
     else:
@@ -40,17 +43,17 @@ def download_part(message, q, session):
         q.put(queue_el)
 
 
-    dt = time.perf_counter() - t0;
-    dcpu = time.thread_time() - cpu0;
-    logging.info("Download %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+        dt = time.perf_counter() - t0;
+        dcpu = time.thread_time() - cpu0;
+        logging.info("Download %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
 
 
 
-def model_part(queue_in, queue_out, onnx, file_ok, file_failed, session, wait):
+def model_part(queue_in, queue_out, onnx, file_ok, file_failed, session, sqs,
+               queue_url, wait):
     t0 = time.perf_counter()
     cpu0 = time.thread_time()
 
-    global current_item
     try:
         if wait:
             path, filename, receipt_handle, image = queue_in.get(timeout=5)
@@ -60,97 +63,115 @@ def model_part(queue_in, queue_out, onnx, file_ok, file_failed, session, wait):
     except queue.Empty:
         return 1
 
-    current_item = (path, filename, receipt_handle, image)
-    t2 = time.perf_counter()
-    cpu2 = time.thread_time()
-    prep_res = preprosses(image)
-    dt = time.perf_counter() - t2;
-    dcpu = time.thread_time() - cpu2;
-    logging.info("preprocess %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+    try:
+        t2 = time.perf_counter()
+        cpu2 = time.thread_time()
+        prep_res = preprosses(image)
+        dt = time.perf_counter() - t2;
+        dcpu = time.thread_time() - cpu2;
+        logging.info("preprocess %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
 
 
-    t3 = time.perf_counter()
-    cpu3 = time.thread_time()
-    onnx_res0 = onnx.run(None, {'images': prep_res})[0][0]
-    dt = time.perf_counter() - t3;
-    dcpu = time.thread_time() - cpu3;
-    logging.info("onnx inf %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+        t3 = time.perf_counter()
+        cpu3 = time.thread_time()
+        onnx_res0 = onnx.run(None, {'images': prep_res})[0][0]
+        dt = time.perf_counter() - t3;
+        dcpu = time.thread_time() - cpu3;
+        logging.info("onnx inf %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
 
 
 
-    t4 = time.perf_counter()
-    cpu4 = time.thread_time()
-    o = onnx_result(onnx_res = onnx_res0, filename = filename,
-                orig_image = image, new_shape = onnx.get_inputs()[0].shape,
-                use_nms = True, conf = 0.05, thres = 0.4)       
+        t4 = time.perf_counter()
+        cpu4 = time.thread_time()
+        o = onnx_result(onnx_res = onnx_res0, filename = filename,
+                    orig_image = image, new_shape = onnx.get_inputs()[0].shape,
+                    use_nms = True, conf = 0.05, thres = 0.4)       
 
-    dt = time.perf_counter() - t4;
-    dcpu = time.thread_time() - cpu4;
-    #profile_path = onnx.end_profiling()
-    logging.info("onnx result %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+        dt = time.perf_counter() - t4;
+        dcpu = time.thread_time() - cpu4;
+        #profile_path = onnx.end_profiling()
+        logging.info("onnx result %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
 
-    #print(filename)
-    #output = model(image,
-    #            conf=0.25,
-    #            save=False,
-    #            show=False,
-    #            verbose=False)
-    
-    #r = result(output[0], filename)
-    t01 = time.perf_counter()
-    cpu01 = time.thread_time()
-    o.all(session)
-    dt = time.perf_counter() - t01;
-    dcpu = time.thread_time() - cpu01;
-    logging.info("OCR %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
-    m = o.csv_res()
-    buffer = o.draw()
-    ext = filename.split('.')[-1]
+        #print(filename)
+        #output = model(image,
+        #            conf=0.25,
+        #            save=False,
+        #            show=False,
+        #            verbose=False)
         
-        
-        
-    #checks if OCR worked correctly
-    if not o.file_name or 'd!!!:' in o.file_name[0]  or 'ind' in o.file_name[0] or len(o.names) == 0:
-        new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
-        r = mv(path, "failed/orig/" + filename)
-        if (r // 100 != 2):
-            print("Move status:", r, filename)
+        #r = result(output[0], filename)
+        t01 = time.perf_counter()
+        cpu01 = time.thread_time()
+        o.all(session)
+        dt = time.perf_counter() - t01;
+        dcpu = time.thread_time() - cpu01;
+        logging.info("OCR %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+        m = o.csv_res()
+        buffer = o.draw()
+        ext = filename.split('.')[-1]
+            
+            
+            
+        #checks if OCR worked correctly
+        if not o.file_name or 'd!!!:' in o.file_name[0]  or 'ind' in o.file_name[0] or len(o.names) == 0:
+            new_path = "disk:/Приложения/arch_fragments/failed/marked/"+filename
+            r = mv(path, "failed/orig/" + filename)
+            if (r // 100 != 2):
+                print("Move status:", r, filename)
 
-        file_failed.write(m + '\n')
-    else:
-        new_file_name =  o.file_name[0] + '.' + ext
-        new_path ="disk:/Приложения/arch_fragments/ok/marked/" + new_file_name
-        #print("mv code:", mv(path, "ok/orig/" + new_file_name))
-        r = mv(path, "ok/orig/" + new_file_name)
-        if (r // 100 != 2):
-            print("Move status:", r, new_file_name)
+            file_failed.write(m + '\n')
+        else:
+            new_file_name =  o.file_name[0] + '.' + ext
+            new_path ="disk:/Приложения/arch_fragments/ok/marked/" + new_file_name
+            #print("mv code:", mv(path, "ok/orig/" + new_file_name))
+            r = mv(path, "ok/orig/" + new_file_name)
+            if (r // 100 != 2):
+                print("Move status:", r, new_file_name)
 
-        file_ok.write(m + '\n')
+            file_ok.write(m + '\n')
 
-    queue_el = (new_path, receipt_handle, buffer)
-    queue_out.put(queue_el)
-    queue_in.task_done()
-    #executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
+        queue_el = (new_path, receipt_handle, buffer)
+        queue_out.put(queue_el)
+        queue_in.task_done()
+        #executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
 
-    dt = time.perf_counter() - t0;
-    dcpu = time.thread_time() - cpu0;
-    logging.info("Image process %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+        dt = time.perf_counter() - t0;
+        dcpu = time.thread_time() - cpu0;
+        logging.info("Image process %s took wall=%.3f s cpu=%.3f s", filename, dt, dcpu)
+
+
+
+    except Exception as e:
+         print(f"An error occurred in model_part {filename}: {e}")
+         print("=============================")
+         traceback.print_exc()
+         print("=============================")
+         mv(path, "completely-failed/" + filename)
+         queue_in.task_done()
+         sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+
     return 0
 
 
-def upload_part(q,sqs, queue_url, session):
+def upload_part(q, sqs, queue_url, session):
     t0 = time.perf_counter()
     cpu0 = time.thread_time()
 
-    new_path, receipt_handle, buffer = q.get()
-    r=upload(buffer, new_path, session)
-    if (r // 100 != 2):
-        print("Upload status:", r, new_path)
+    try:
+        new_path, receipt_handle, buffer = q.get(timeout=10)
+    except queue.Empty:
+        logging.warning("Upload worker timed out waiting for item in q_out.")
+        return
 
-    sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+    try:
+        r = upload(buffer, new_path, session)
+        if (r // 100 != 2):
+            print("Upload status:", r, new_path)
 
-    q.task_done()
+        sqs.delete_message(QueueUrl=queue_url, ReceiptHandle=receipt_handle)
+    except Exception as e:
+        print(f"Failed to upload or delete message for {new_path}: {e}")
+    finally:
+        q.task_done()
 
-    dt = time.perf_counter() - t0;
-    dcpu = time.thread_time() - cpu0;
-    logging.info("Image upload %s took wall=%.3f s cpu=%.3f s", new_path, dt, dcpu)
+    logging.info("Image upload %s took wall=%.3f s cpu=%.3f s", new_path, time.perf_counter() - t0, time.thread_time() - cpu0)

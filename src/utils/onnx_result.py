@@ -82,6 +82,7 @@ class onnx_result:
         #makes boxes out of onnx output
         self.label_box = np.array([np.int32(cv2.boxPoints(a)) for a in self.label_rects])
         self.frag_box = np.array([np.int32(cv2.boxPoints(a)) for a in self.frag_rects])
+
         
 
 
@@ -101,7 +102,8 @@ class onnx_result:
             text, code  = ocr(label, apiKey, folderId, session)
             if text is not None:
                 ind1 = index1(text)
-                text.remove(ind1)
+                if ind1 != "no_index1":
+                    text.remove(ind1)
                 ind2 = index2(text)
                 self.file_name.append(fix_cyr(ind1 + "_" + ind2))
             else:
