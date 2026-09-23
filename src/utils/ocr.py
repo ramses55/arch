@@ -81,7 +81,7 @@ def get_text(blocks, label_box):
 def index1(text: list) -> str:
 
     '''
-        This function tries to find ind1
+        This function tries to find ind1. This is sequence of numbers.
 
 
 
@@ -110,7 +110,8 @@ def index1(text: list) -> str:
 def index2(text: list) -> str:
 
     '''
-        This function tries to find ind2
+        This function tries to find ind2. This is sequnce of few letters
+        followed by numbers or just numbers
 
 
 
@@ -124,8 +125,8 @@ def index2(text: list) -> str:
     '''
 
     for a in text:
-        if not '.' in a and a[-1].isnumeric():
-            return a.replace('З', '3').replace('О', '0') #replaces letter for digit
+        if not '.' in a and not " " in a and a[-1].isnumeric():
+            return a.replace('З', '3').replace('О', '0').replace("/", "1") #replaces letter for digit
 
 
     return "no_index2"
