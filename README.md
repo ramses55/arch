@@ -35,7 +35,7 @@ export YC_CLOUD_ID=$(yc config get cloud-id)
 export YC_FOLDER_ID=$(yc config get folder-id)
 export TF_VAR_folder_id=$(yc config get folder-id)
 ```
-  #### c) Create a service account for terraform. Be sure to save access key pair as secret value will be shown once.
+  #### c) Create a service account for terraform. Be sure to save access key pair as the secret value will be shown once.
   
 
 ```bash
@@ -63,24 +63,23 @@ oauth_token   = "<oauth_token>" # Token for Yandex Disk REST API
 ### 5. Build base infrastructure
 
 ```bash
+terrafrom init
 terrafrom apply
+export TAG="cr.yandex/$(terraform output -raw container_registry_url)/worker:latest"
 ```
 ### 6. Use registry URL provided by terraform output to build and push docker image
 
 ```bash
 cd ../src
-docker build -t <registry url provided by terraform>/worker:latest -f Dockerfile.worker .
-docker push <registry url provided by terraform>/worker:latest
+docker build -t $TAG -f Dockerfile.worker .
+docker push $TAG
 ```
 ### 7. Update terraform configuration to use proper container image
 
 ```bash
 cd ../infrastructure
-terraform apply -var="container_image=<registry url provided by terraform>/worker:latest"
+terraform apply -var="container_image=$TAG"
 ```
 
 ### 8. Terraform produced front.html file which is the basic frontend to trigger image processing
-
-
-
 
