@@ -1,1 +1,1 @@
-src/weights/best.onnx filter=lfs diff=lfs merge=lfs -text
+src/weights/new-weight.onnx filter=lfs diff=lfs merge=lfs -text
