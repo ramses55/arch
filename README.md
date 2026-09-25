@@ -63,8 +63,8 @@ oauth_token   = "<oauth_token>" # Token for Yandex Disk REST API
 ### 5. Build base infrastructure
 
 ```bash
-terrafrom init
-terrafrom apply
+terraform init
+terraform apply
 export TAG="cr.yandex/$(terraform output -raw container_registry_url)/worker:latest"
 ```
 ### 6. Use registry URL provided by terraform output to build and push docker image
