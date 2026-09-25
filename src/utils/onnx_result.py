@@ -14,11 +14,6 @@ from utils.config import settings
 
 from itertools import combinations, compress
 
-from utils import crop_rect, orient_label, find_label
-from utils import ocr, index1, index2, fix_cyr
-from utils.config import settings
-
-
 class onnx_result:
     def __init__(self, onnx_res, filename, orig_image, new_shape, conf,
                  use_nms=True, thres=0.5):
@@ -87,6 +82,7 @@ class onnx_result:
         #makes boxes out of onnx output
         self.label_box = np.array([np.int32(cv2.boxPoints(a)) for a in self.label_rects])
         self.frag_box = np.array([np.int32(cv2.boxPoints(a)) for a in self.frag_rects])
+
         
 
 
@@ -104,10 +100,11 @@ class onnx_result:
                 ) -> list:
         for label in self.label:
             text, code  = ocr(label, apiKey, folderId, session)
-            ind1 = index1(text)
-            text.remove(ind1)
-            ind2 = index2(text)
             if text is not None:
+                ind1 = index1(text)
+                if ind1 != "no_index1":
+                    text.remove(ind1)
+                ind2 = index2(text)
                 self.file_name.append(fix_cyr(ind1 + "_" + ind2))
             else:
                 self.file_name.append(f"OCR failed!!!: {code}")

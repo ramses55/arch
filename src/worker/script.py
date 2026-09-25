@@ -20,6 +20,7 @@ import cv2
 import numpy as np
 
 
+#this prevents thread thrashing 
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
@@ -56,7 +57,7 @@ s3 = boto3.client(service_name='s3',
 
 
 # max number of workers
-max_w=15
+max_w=5
 
 logging.basicConfig(filename=f'log{max_w}', level=logging.INFO)
 
@@ -69,11 +70,10 @@ q_out = queue.Queue()
 opts = ort.SessionOptions()
 
 # otherway onnx runs slower because of thread thrashing
-# Explicitly force 1 thread to completely stop ONNX from calculating affinity
 opts.intra_op_num_threads = 1
 opts.inter_op_num_threads = 1
 
-# Prevent global thread pool scaling issues
+# prevent global thread pool scaling issues
 opts.use_per_session_threads = True
 
 
@@ -117,47 +117,37 @@ def fun():
             m1 = [ (json.loads(m["Body"]), m["ReceiptHandle"]) for m in messages]
             messages = [ (a[0], a[1], b) for a,b in m1]
         
-        
             num += len(messages)
             if (len(messages) == 0):
                 i+=1
                 continue
 
             for message in messages:
-                executor.submit(download_part, message, q_in, session)
+                executor.submit(download_part, message, sqs, QUEUE_URL, q_in, session)
 
-            try:
-                # here it will sleep and wait for task
-                 res = model_part(q_in, q_out, onnx, ok, failed,
-                                  session, wait=True)
-                 if res == 0:
-                    executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
+            
+            # here it will sleep and wait for task
+            res = model_part(q_in, q_out, onnx, ok, failed,
+                              session, sqs, QUEUE_URL, wait=True)
+            if res == 0:
+                executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
 
-            except Exception as e:
-                 print(f"An error occurred: {e}")
-                 traceback.print_exc()
         
-        
+
         while q_in.qsize() != 0:
-                try:
-                    res = model_part(q_in, q_out, onnx, ok, failed, session, wait=False)
-                    print("res", res)
+                res = model_part(q_in, q_out, onnx, ok, failed,
+                                  session, sqs, QUEUE_URL, wait=False)
+                print("res", res)
 
-                    print("q_in size:", q_in.qsize())
+                print("q_in size:", q_in.qsize())
 
-                    if res == 0:
-                        executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
-                        print("q_in size:", q_in.qsize(), "pushed to executor")
-
-
-                    if res == 1 or q_in.qsize() == 0:
-                        break
+                if res == 0:
+                    executor.submit(upload_part, q_out, sqs, QUEUE_URL, session)
+                    print("q_in size:", q_in.qsize(), "pushed to executor")
 
 
-
-
-                except Exception as e:
-                    print(f"An error occurred: {e}")
+                if res == 1 or q_in.qsize() == 0:
+                    break
 
         executor.shutdown(wait=True)
 

@@ -189,8 +189,9 @@ def handler(event, context):
     mkdir('ok/marked')
     mkdir('failed/marked')
     mkdir('failed/orig')
+    mkdir('completely-failed')
     print("num of files:", len(files))
-    print("6 mkdirs took", time.time() - start)
+    print("7 mkdirs took", time.time() - start)
 
     return {"body": {"num_mes": len(files)}}
 
